@@ -63,7 +63,7 @@ for link in p_link:
             # # Cuộn trang xuống 1/3 chiều cao của trang
     # Danh sách để chứa văn bản đã được nối từ mỗi thẻ div lớn
         joined_texts = []
-        unique_comments = set()
+        # unique_comments = set()
         visited_links.add(link)
         processed = 0
 
