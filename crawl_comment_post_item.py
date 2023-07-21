@@ -9,7 +9,6 @@ import pandas as pd
 import itertools
 from selenium.common.exceptions import NoSuchElementException
 import re
-import humanfriendly
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
@@ -37,7 +36,7 @@ driver = webdriver.Chrome("C:\\Users\\Admin\\Downloads\\chromdriv\\chromedriver.
  
 driver.get('https://www.facebook.com/')
 sleep(3)
-cookies = pickle.load(open("my_cookie.pkl" , "rb"))
+cookies = pickle.load(open("my_cookie2.pkl" , "rb"))
 for cookie in cookies:
     driver.add_cookie(cookie)
 sleep(3)
@@ -61,7 +60,7 @@ for link in p_link:
         sleep(2)
 
             # # Cuộn trang xuống 1/3 chiều cao của trang
-    # Danh sách để chứa văn bản đã được nối từ mỗi thẻ div lớn
+        # Danh sách để chứa văn bản đã được nối từ mỗi thẻ div lớn
         joined_texts = []
         # unique_comments = set()
         visited_links.add(link)
@@ -72,11 +71,14 @@ for link in p_link:
                 big_divs = driver.find_elements(By.XPATH , '//div[@class="x1lliihq xjkvuk6 x1iorvi4"]')
 
                 for big_div in big_divs[processed:]:
-                    more_button = big_div.find_elements(By.XPATH , './/div[@role="button" and text()="See more"]')
-                    if more_button: 
-                        # Nhấp vào nút đó
-                        driver.execute_script("arguments[0].scrollIntoView(); window.scrollBy(0, -100);",more_button[0])
-                        more_button[0].click()
+                    try:
+                        more_button = big_div.find_elements(By.XPATH , './/div[@role="button" and text()="Xem thêm"]')
+                        if more_button: 
+                            # Nhấp vào nút đó
+                            driver.execute_script("arguments[0].scrollIntoView(); window.scrollBy(0, -100);",more_button[0])
+                            more_button[0].click()
+                    except Exception as e:
+                        pass
                     # Trong mỗi thẻ div lớn, tìm tất cả các thẻ div con
                     text_elements = big_div.find_elements(By.XPATH , './/span[@dir="auto" and @lang="en"]/div/div[@dir="auto"]')
                     # Lấy văn bản từ mỗi thẻ div con và nối chúng lại với nhau
@@ -90,7 +92,7 @@ for link in p_link:
                         json.dump(data[-1], f)
                         f.write('\n')
                 processed = len(big_divs)
-                more_button_2 = driver.find_element(By.XPATH , '//div[@role="button" and contains(.,"View more comments")]')
+                more_button_2 = driver.find_element(By.XPATH , '//div[@role="button" and contains(.,"Xem thêm bình luận")]')
 
                 # Cuộn trang đến nút đó
                 driver.execute_script("arguments[0].scrollIntoView(); window.scrollBy(0, -50);", more_button_2)
@@ -98,13 +100,13 @@ for link in p_link:
                 more_button_2.click()
                 
                 # Đợi một chút để trang web tải thêm bình luận
-                sleep(3)
+                sleep(2)
 
             except Exception as e:
                 
                 # Nếu không tìm thấy nút "Xem thêm bình luận", thoát khỏi vòng lặp
                 break
-        
+                
 # Khởi tạo một set để lưu trữ các comment duy nhất
 
 

@@ -18,7 +18,7 @@ chrome_options.add_argument(f'user-agent={user_agent}')
 driver = webdriver.Chrome("C:\\Users\\Admin\\Downloads\\chromdriv\\chromedriver.exe" , options=chrome_options)
 driver.get('https://www.facebook.com/')
 sleep(3)
-cookies = pickle.load(open("my_cookie.pkl" , "rb"))
+cookies = pickle.load(open("my_cookie2.pkl" , "rb"))
 for cookie in cookies:
     driver.add_cookie(cookie)
 sleep(3)
@@ -41,7 +41,7 @@ num_lines = len(crawled_hrefs)
 # Nếu file CSV đã có 1000 dòng hoặc nhiều hơn, không thực thi vòng lặp
 if num_lines < 5000:
     # Mở file CSV trong chế độ ghi tiếp tục
-    with open('output.csv', 'a', newline='', encoding='utf-8') as file:
+    with open('output2.csv', 'a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
 
         while True:  # Vòng lặp vô hạn, dừng lại khi đạt được điều kiện
