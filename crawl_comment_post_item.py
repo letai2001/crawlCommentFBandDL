@@ -43,12 +43,13 @@ sleep(3)
 driver.get('https://www.facebook.com/')
 sleep(2)
 
+    
 #git
 data = []
 MAX_RETRIES = 5
 visited_links = set()
 try:
-    with open('data21.json', 'r') as f:
+    with open('data22.json', 'r') as f:
         for line in f:
             obj = json.loads(line)
             visited_links.add(obj['Link'])
@@ -59,12 +60,15 @@ for link in p_link:
         driver.get(link)
         sleep(2)
 
+
             # # Cuộn trang xuống 1/3 chiều cao của trang
         # Danh sách để chứa văn bản đã được nối từ mỗi thẻ div lớn
         joined_texts = []
         # unique_comments = set()
         visited_links.add(link)
         processed = 0
+
+        comments_data = {"Link": link, "comments": []}
 
         while True:
             try:
@@ -74,39 +78,30 @@ for link in p_link:
                     try:
                         more_button = big_div.find_elements(By.XPATH , './/div[@role="button" and text()="Xem thêm"]')
                         if more_button: 
-                            # Nhấp vào nút đó
-                            driver.execute_script("arguments[0].scrollIntoView(); window.scrollBy(0, -100);",more_button[0])
+                            driver.execute_script("arguments[0].scrollIntoView(); window.scrollBy(0, -100);", more_button[0])
                             more_button[0].click()
                     except Exception as e:
                         pass
-                    # Trong mỗi thẻ div lớn, tìm tất cả các thẻ div con
+
                     text_elements = big_div.find_elements(By.XPATH , './/span[@dir="auto" and @lang="en"]/div/div[@dir="auto"]')
-                    # Lấy văn bản từ mỗi thẻ div con và nối chúng lại với nhau
                     texts = [element.text for element in text_elements]
                     joined_text = ' '.join(texts)
-                    # Chỉ thêm văn bản đã được nối vào danh sách nếu nó không tồn tại trong set
-                    # if joined_text not in unique_comments:
-                    # unique_comments.add(joined_text)
-                    data.append({"Link": link,  'comment': joined_text , })
-                    with open('data21.json', 'a') as f:
-                        json.dump(data[-1], f)
-                        f.write('\n')
+                    comments_data["comments"].append(joined_text)
+
                 processed = len(big_divs)
                 more_button_2 = driver.find_element(By.XPATH , '//div[@role="button" and contains(.,"Xem thêm bình luận")]')
-
-                # Cuộn trang đến nút đó
                 driver.execute_script("arguments[0].scrollIntoView(); window.scrollBy(0, -50);", more_button_2)
-                # Nhấp vào nút đó
                 more_button_2.click()
-                
-                # Đợi một chút để trang web tải thêm bình luận
                 sleep(2)
 
             except Exception as e:
-                
-                # Nếu không tìm thấy nút "Xem thêm bình luận", thoát khỏi vòng lặp
                 break
-                
+
+        data.append(comments_data)
+        with open('data22.json', 'a') as f:
+            json.dump(comments_data, f)
+            f.write('\n')
+
 # Khởi tạo một set để lưu trữ các comment duy nhất
 
 
