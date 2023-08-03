@@ -37,30 +37,39 @@ with open('output.csv', 'r', newline='', encoding='utf-8') as file:
 
 # Kiểm tra độ dài của file CSV
 num_lines = len(crawled_hrefs)
-
+num_lines_2 = 0
 # Nếu file CSV đã có 1000 dòng hoặc nhiều hơn, không thực thi vòng lặp
-if num_lines < 5000:
     # Mở file CSV trong chế độ ghi tiếp tục
-    with open('output.csv', 'a', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
+with open('output.csv', 'a', newline='', encoding='utf-8') as file:
+    writer = csv.writer(file)
 
-        while True:  # Vòng lặp vô hạn, dừng lại khi đạt được điều kiện
-            # Cuộn trang xuống đến cuối
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
-            
-            # Tìm tất cả các nút share trên trang
-            shareBtns = driver.find_elements(By.XPATH , '//a[@class="x1i10hfl xjbqb8w x6umtig x1b1mbwd xaqea5y xav7gou x9f619 x1ypdohk xt0psk2 xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1a2a7pz x1heor9g xt0b8zv xo1l8bm"]')
-            
-            # Lấy href từ các nút share, kiểm tra xem chúng đã được crawl chưa và nếu chưa thì ghi vào file CSV
+    while True:  # Vòng lặp vô hạn, dừng lại khi đạt được điều kiện
+        # Cuộn trang xuống đến cuối
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+        
+        # Tìm tất cả các nút share trên trang
+        shareBtns = driver.find_elements(By.XPATH , '//a[@class="x1i10hfl xjbqb8w x6umtig x1b1mbwd xaqea5y xav7gou x9f619 x1ypdohk xt0psk2 xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1a2a7pz x1heor9g xt0b8zv xo1l8bm"]')
+        
+        # Lấy href từ các nút share, kiểm tra xem chúng đã được crawl chưa và nếu chưa thì ghi vào file CSV
+        if(num_lines == 0):
+            for btn in shareBtns[num_lines_2:]:
+                href = btn.get_attribute('href')
+                crawled_hrefs.add(href)
+                writer.writerow([href])
+                
+        else:
             for btn in shareBtns:
                 href = btn.get_attribute('href')
                 if href not in crawled_hrefs:
                     crawled_hrefs.add(href)
                     writer.writerow([href])
-            
-            # Kiểm tra độ dài file CSV, dừng vòng lặp nếu file CSV đã chứa 1000 dòng
-            if len(crawled_hrefs) >=5000:
-                break
+                else:
+                    break
+        
+        # Kiểm tra độ dài file CSV, dừng vòng lặp nếu file CSV đã chứa 1000 dòng
+        num_lines_2 = len(crawled_hrefs)
+        if num_lines_2 >=500:
+            break
 
-            # Dừng chương trình trong một khoảng thời gian (ví dụ 5 giây) trước khi cuộn trang tiếp theo
-            sleep(4)
+        # Dừng chương trình trong một khoảng thời gian (ví dụ 5 giây) trước khi cuộn trang tiếp theo
+        sleep(1)

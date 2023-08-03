@@ -20,7 +20,7 @@ driver.get('https://www.facebook.com/')
 
 # fill in account and password
 txtUser = driver.find_element(By.ID , "email")
-txtUser.send_keys('surwillogregotpj.o9.205@gmail.com')
+txtUser.send_keys('wasantha.lifel.o.gy@gmail.com')
 sleep(2)
 txtPassword = driver.find_element(By.ID , "pass")
 txtPassword.send_keys('thanhnam4321')
@@ -29,6 +29,6 @@ txtPassword.send_keys(Keys.ENTER)
 sleep(10)
 
 
-pickle.dump(driver.get_cookies() , open("my_cookie.pkl" , "wb"))
+pickle.dump(driver.get_cookies() , open("my_cookie_new.pkl" , "wb"))
 
 driver.close()
