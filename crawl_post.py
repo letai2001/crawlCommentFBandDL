@@ -30,6 +30,8 @@ p_link = df_link['link_post'].to_list()
 # p_link = p1_link[42:100]
 chrome_options = Options()
 chrome_options.add_argument('--no-sandbox')
+chrome_options.add_experimental_option('prefs', {'intl.accept_languages': 'en,en_US'})
+chrome_options.add_argument("--disable-notification")
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
 chrome_options.add_argument(f'user-agent={user_agent}') 
 driver = webdriver.Chrome("C:\\Users\\Admin\\Downloads\\chromdriv\\chromedriver.exe" , options=chrome_options)
@@ -61,7 +63,7 @@ def find_name(driver):
     return None
 
 for link in p_link:
-# link = 'https://www.facebook.com/fabrizioromanoherewego/posts/pfbid02JnTvt5yxNnCD2J3t7CfcvwTEHyeoECAULdKarmRFfyCmyZcxWbLi2et6ZEomSbXYl'
+    # link = 'https://www.facebook.com/raumdeuter13/posts/pfbid0hpsTAbDL71XLwqC5WDsuRtQSLbasEqX7ULmffW7b3xZGykCc9bzr5vYJAunYm4DGl'
     driver.get(link)
     sleep(2)
 
@@ -81,13 +83,15 @@ for link in p_link:
     #         tmp.append({'order_value' : order_value, 'text' : text})
 
     # tmp.sort(key=lambda x: x['order_value'])
-    parent_element = driver.find_element(By.XPATH, "//div[@class='xdj266r x11i5rnm xat24cr x1mh8g0r x1vvkbs x126k92a']")
+    xpath_main_div = '//div[contains(@class, "x126k92a")]'
+
+    parent_element = driver.find_elements(By.XPATH,xpath_main_div )
 
     # Tìm tất cả các phần tử div con bên trong có thuộc tính dir='auto'
-    div_elements = parent_element.find_elements(By.XPATH, ".//div[@dir='auto']")
+    # div_elements = parent_element.find_elements(By.XPATH, ".//div")
 
     # Lấy văn bản từ mỗi phần tử div và nối chúng lại
-    complete_text = ' '.join(div.text for div in div_elements)
+    complete_text = ' '.join(div.text for div in parent_element)
 
 
 
