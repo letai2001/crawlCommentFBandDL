@@ -27,8 +27,6 @@ txtPassword.send_keys('thanhnam4321')
 sleep(2)
 txtPassword.send_keys(Keys.ENTER)
 sleep(10)
-
-
 pickle.dump(driver.get_cookies() , open("my_cookie_new.pkl" , "wb"))
 
 driver.close()
