@@ -64,6 +64,7 @@ def find_author(driver):
         return link, text
     else:
         return None, None
+
 def find_content(driver):
     try:
         div_elem = driver.find_element(By.XPATH, '//div[@data-ft=\'{"tn":"*s"}\']')
@@ -74,8 +75,29 @@ def find_content(driver):
         # Gộp tất cả các dòng text thành một văn bản
         full_text = ' '.join(texts)
     except Exception as e:
-        full_text = 'no content'
+        full_text = ''
     return full_text
+def find_content_background(driver):
+    try:
+        divs_with_style = driver.find_element(By.XPATH , '//div[@data-ft=\'{"tn":"*s"}\']//div[contains(@style, "background-image")]')
+
+    # Duyệt qua từng thẻ div và lấy các văn bản trong thẻ span có style chứa chuỗi "background-image"
+        
+        all_text = ' '.join(span.text  for span in divs_with_style.find_elements(By.XPATH , './/span'))
+    except Exception as e:
+        all_text = ''
+    return all_text
+def find_link_share(driver):
+    try:
+        divs_with_table = driver.find_element(By.XPATH , '//div[@data-ft=\'{"tn":"H"}\'][.//table]')
+        table_element = divs_with_table.find_element(By.XPATH , './/table')
+        table_text = table_element.text
+    except Exception as e:
+        table_text = ''
+    return table_text
+        
+
+
 def count_react(driver , react):
     number = 0
     
@@ -99,7 +121,7 @@ def count_react_item(driver , link):
 
     driver.get(link_href)
     
-    sleep(1.5)
+    sleep(3)
     
     # Duyệt qua từng thẻ div và tìm các thẻ con có arial-label chứa các reaction như "Like", "Haha", ...
     reaction_Like = count_react(driver , "Like")
@@ -110,12 +132,12 @@ def count_react_item(driver , link):
     reaction_Angry = count_react(driver , "Angry")
     reaction_Huhu = count_react(driver , "Huhu")
     reaction_All = reaction_Like+reaction_Love+reaction_Care+reaction_Wow+reaction_Haha+reaction_Angry+reaction_Huhu
-    
+    sleep(3)
     driver.get(link)
-    sleep(1)
+    sleep(3)
 
     return reaction_All ,  reaction_Like , reaction_Love, reaction_Care , reaction_Wow , reaction_Haha , reaction_Angry , reaction_Huhu
-def find_all_images(driver):
+def find_all_images(driver , link):
     xpath_img = '//div[@data-ft=\'{"tn":"H"}\']//a[starts-with(@href, \'/photo.php?\')]//img'
     img_elements = driver.find_elements(By.XPATH , xpath_img)
     xpath_href_img = '//div[@data-ft=\'{"tn":"H"}\']//a[starts-with(@href, \'/photo.php?\')]'
@@ -124,15 +146,30 @@ def find_all_images(driver):
     image_links = [img_element.get_attribute("src") for img_element in img_elements]
     image_links_a = [href_img_element.get_attribute("href") for href_img_element in href_img_elements]
     ids_hrefs = [re.search(r'fbid=(\d+)', link).group(1) for link in image_links_a if re.search(r'fbid=(\d+)', link)]
-
+    start_meet_video = 0
     if len(image_links_a) >1:
         driver.get(image_links_a[len(image_links_a)-1])
         while(True):
             xpath_next = '//a[starts-with(@href, \'/photo.php?\') and normalize-space()="Next"]'
             next_element = driver.find_element(By.XPATH, xpath_next)
             next_link = next_element.get_attribute("href")
-            id_match = re.search(r'fbid=(\d+)', next_link).group(1)
 
+            if(start_meet_video != 0):
+                next_link = 'Previous'
+                
+            try:
+                id_match = re.search(r'fbid=(\d+)', next_link).group(1)
+            except:
+                try:
+                    if(start_meet_video ==0):
+                        driver.get(image_links_a[0])
+                        start_meet_video = start_meet_video+1
+                    xpath_next = '//a[starts-with(@href, \'/photo.php?\') and normalize-space()="Previous"]'
+                    next_element = driver.find_element(By.XPATH, xpath_next)
+                    next_link = next_element.get_attribute("href")
+                    id_match = re.search(r'fbid=(\d+)', next_link).group(1)
+                except:
+                    break
             if id_match not in ids_hrefs:
                 image_links_a.append(next_link)
                 ids_hrefs.append(id_match)
@@ -144,6 +181,10 @@ def find_all_images(driver):
 
             else:
                 break
+        sleep(1)
+        driver.get(link)
+        sleep(1)
+    
     return image_links
 def find_link_video(driver):
     video_link = "no video"
@@ -155,20 +196,22 @@ def find_link_video(driver):
     return video_link
 
 # for link in p_link:
-link = 'https://mbasic.facebook.com/story.php?story_fbid=pfbid035S4MRdNibFUeFUd9jo5irfXwoeJz6vbWEHxuNPmBbhJ5UfTFhmmhTGM9enzLpCeMl&id=100091135001716&eav=AfaAlx4mtvXbQYDVHsGC4TIVCuV8Haf5jOO4VVAYHmrAMxhZ9zG3t8xHVUG_rQulCNU&__xts__%5B0%5D=12.AbouGJp2ikJ1NREfg7ef5L4K0y4Lb9UzsaikaBLXFr6v3UoyvldH68WiqGaudHgl9kpn1BqZB4ujwIgi4u2WnJxi3sW3e0J-wdUL_h4wUOhatU44bS4eAJ1vUdkeInl3CKcjh07bDZa_HtHTLjvvWqpq2YXZqQ2uw2fkGcHXtbyzsfIbUt8FScia-zBjGV3pHRLwDMp5uniMjR_JckKF-0ttMUFQaBepT8MsNvw29ARepX7HVxlQuW8DRMfi9p8CRB655zqinRXEx-0yEGXcUAa3Ge15pnDLIjwvdgu6L99n11-URCxbiAihUMaS_RcCEpgrd8FmqKudo8qL_z99a04OdA26pHKGxQ4sjNrGSRBJ-i-63lzf4qH5RfUOsCHJDwSark8fu7tE6P2DpWWdXBpw8RbQf7ApSa75vrW7_YNDdizb2B6WvGjn1xPr2c0HS0eLgGcQ2q5PRrGAji7vM0_sH5S--nb5ytj98nTVBCopZuBMBUs-uDKDqsEfmNaUhE4-EOoGOkcmne2cJMgnGL6yXQqo0nwnjWaM0Z23p8cCcwGRv6lIGP4cXNUiNeHgSrA7_Lf9t3Lwz758L_DqLNdNwuaMANLQ7MvqEsncR9Nk35eVBQfZWulmJ2N65_I9Iw9Zmt0CI6KK7J6T3h_98TfrtEzFwPGRZ0FLAsx2Tgdp6s6oY9BLowb-xbtvU_AeRMc&__tn__=%2AW&paipv=0'
+link = 'https://mbasic.facebook.com/story.php?story_fbid=pfbid02CuqshZ112QWgWEPdCY9U1qm6NuaDgLnfstae4CtcvbojGeGZsYapkt9hGf1aAjPLl&id=100064656432658&eav=AfZaoQyQHRGedNCHuUmllkxPAEMOFeEQpT2Zh7T7y1G6ylRde1FQpCO75kFm1xgb0D8&__xts__%5B0%5D=12.Abrh5W-Jzwgz_mIxOV__tP7j73FiS4UU_uLN8Pn41ffbKgHwvdfmynCJz7B9O__Wv67puOkUc61epJ2PAnOWL8V_z66V1BCegF5_2ec9EztiiCngAWYuSRDBBBVIkGIxwjjIO_kuUqRmqpP9uA4lOnUQkjOr_biIRPGFAgJlQwDwTlDx_XJArAbFPOdWqbQfPxeGDLG9diZFvOnmcNp8Da-FLrdfchtXLSlyjocPCz731WqQ6P_YLQPUYyAMmb7lgkraKKciYrx9eb5IJl_B0n2XNhMFfSorj8rEKvHK_Y4Y3sTUkPnKc2aNsIkiumtLBPMdRiUipwE8bkhjtYGIZW7C2839jr_c7iUVR3K1okw3oe73yiESal7JECMc-1Aaav4q5QwArk7Hoh-A_O0-J9T4GmzMMI6LrDQBJjvbC-arFF9iPTyDonWR0m268tGu9wlS7g2s3FZIW0lLQ56cx7ga0JSgQltbt8e03eyrzmrSkkV6CqEKhAp9zxXT2SSLEL9o0qpmRpd1YX7fyXIf0YUn6XGGmtnGOp2VZfCb1rEur-G_MzWGz235WcmnnCUNfMcztdqOGMiGibO2Q4ZcBC90fuqZZHP71Yvbasqi6fa-E7i9k3xoonatqQx4z7yflNx3Shg4EoPeAwcFoZvLWzer6Cu54gY1LBpGt5p-Go4hFx78bKj9KqcSJg6ZboBxV00&__tn__=%2AW&paipv=0#footer_action_list'
 driver.get(link)
 sleep(2)
 auth_link , auth_text = find_author(driver)
-content = find_content(driver)
+content = find_content(driver)+find_content_background(driver)
 reaction_All ,  reaction_Like , reaction_Love, reaction_Care , reaction_Wow , reaction_Haha , reaction_Angry , reaction_Huhu = count_react_item(driver , link)
 link_video = find_link_video(driver)
+text_share = find_link_share(driver)
 print(auth_link , auth_text)    
 print(content)
+print(text_share)
 print(reaction_All)
 print(reaction_Love)
 print(reaction_Wow)
 print(link_video)
 # In kết quả
-image_links = find_all_images(driver)
+image_links = find_all_images(driver , link)
 for image_link in image_links:
     print(image_link)
