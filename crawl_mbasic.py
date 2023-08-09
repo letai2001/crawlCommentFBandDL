@@ -33,7 +33,7 @@ driver = webdriver.Chrome("C:\\Users\\Admin\\Downloads\\chromdriv\\chromedriver.
 
 driver.get('https://www.facebook.com/')
 sleep(3)
-cookies = pickle.load(open("my_cookie_new.pkl" , "rb"))
+cookies = pickle.load(open("my_cookie_2.pkl" , "rb"))
 for cookie in cookies:
     driver.add_cookie(cookie)
 sleep(3)
@@ -90,12 +90,29 @@ def find_content_background(driver):
 def find_link_share(driver):
     try:
         divs_with_table = driver.find_element(By.XPATH , '//div[@data-ft=\'{"tn":"H"}\'][.//table]')
+        link_share_element = divs_with_table.find_element(By.TAG_NAME , 'a')
+        link_share = link_share_element.get_attribute('href')
         table_element = divs_with_table.find_element(By.XPATH , './/table')
         table_text = table_element.text
     except Exception as e:
         table_text = ''
-    return table_text
+        link_share = ''
+    return link_share , table_text
         
+def find_content_share(driver):
+    try:
+        outer_div = driver.find_elements(By.XPATH, '//div[@data-ft=\'{"tn":"H"}\']')
+        inner_div_s = outer_div[0].find_element(By.XPATH, './/div[@data-ft=\'{"tn":"*s"}\']')
+        p_elements = inner_div_s.find_elements(By.TAG_NAME, 'p')
+        texts = [elem.text for elem in p_elements]
+
+        # Gộp tất cả các dòng text thành một văn bản
+        full_text = ' '.join(texts)
+    except:
+        full_text = ''
+    return full_text
+
+
 
 
 def count_react(driver , react):
@@ -138,9 +155,9 @@ def count_react_item(driver , link):
 
     return reaction_All ,  reaction_Like , reaction_Love, reaction_Care , reaction_Wow , reaction_Haha , reaction_Angry , reaction_Huhu
 def find_all_images(driver , link):
-    xpath_img = '//div[@data-ft=\'{"tn":"H"}\']//a[starts-with(@href, \'/photo.php?\')]//img'
+    xpath_img = '//div[@data-ft=\'{"tn":"H"}\']//a[c]//img'    
     img_elements = driver.find_elements(By.XPATH , xpath_img)
-    xpath_href_img = '//div[@data-ft=\'{"tn":"H"}\']//a[starts-with(@href, \'/photo.php?\')]'
+    xpath_href_img = '//div[@data-ft=\'{"tn":"H"}\']//a[contains(@href, \'photo\')]'
     href_img_elements = driver.find_elements(By.XPATH , xpath_href_img)
     # Lưu trữ các liên kết hình ảnh
     image_links = [img_element.get_attribute("src") for img_element in img_elements]
@@ -174,7 +191,7 @@ def find_all_images(driver , link):
                 image_links_a.append(next_link)
                 ids_hrefs.append(id_match)
                 driver.get(next_link)
-                sleep(0.5)
+                sleep(2)
                 img_element = driver.find_element(By.XPATH, '//div[@style="text-align:center;"]//img')
 
                 image_links.append(img_element.get_attribute("src"))
@@ -196,17 +213,19 @@ def find_link_video(driver):
     return video_link
 
 # for link in p_link:
-link = 'https://mbasic.facebook.com/story.php?story_fbid=pfbid02CuqshZ112QWgWEPdCY9U1qm6NuaDgLnfstae4CtcvbojGeGZsYapkt9hGf1aAjPLl&id=100064656432658&eav=AfZaoQyQHRGedNCHuUmllkxPAEMOFeEQpT2Zh7T7y1G6ylRde1FQpCO75kFm1xgb0D8&__xts__%5B0%5D=12.Abrh5W-Jzwgz_mIxOV__tP7j73FiS4UU_uLN8Pn41ffbKgHwvdfmynCJz7B9O__Wv67puOkUc61epJ2PAnOWL8V_z66V1BCegF5_2ec9EztiiCngAWYuSRDBBBVIkGIxwjjIO_kuUqRmqpP9uA4lOnUQkjOr_biIRPGFAgJlQwDwTlDx_XJArAbFPOdWqbQfPxeGDLG9diZFvOnmcNp8Da-FLrdfchtXLSlyjocPCz731WqQ6P_YLQPUYyAMmb7lgkraKKciYrx9eb5IJl_B0n2XNhMFfSorj8rEKvHK_Y4Y3sTUkPnKc2aNsIkiumtLBPMdRiUipwE8bkhjtYGIZW7C2839jr_c7iUVR3K1okw3oe73yiESal7JECMc-1Aaav4q5QwArk7Hoh-A_O0-J9T4GmzMMI6LrDQBJjvbC-arFF9iPTyDonWR0m268tGu9wlS7g2s3FZIW0lLQ56cx7ga0JSgQltbt8e03eyrzmrSkkV6CqEKhAp9zxXT2SSLEL9o0qpmRpd1YX7fyXIf0YUn6XGGmtnGOp2VZfCb1rEur-G_MzWGz235WcmnnCUNfMcztdqOGMiGibO2Q4ZcBC90fuqZZHP71Yvbasqi6fa-E7i9k3xoonatqQx4z7yflNx3Shg4EoPeAwcFoZvLWzer6Cu54gY1LBpGt5p-Go4hFx78bKj9KqcSJg6ZboBxV00&__tn__=%2AW&paipv=0#footer_action_list'
+link = 'https://mbasic.facebook.com/gmanews/posts/pfbid0BZDJ7crLByXSwA9gRgPdFpg4SYAs4joigAtbYvfaVPJ2hFziWRkcZsKt1VsWToxJl'
 driver.get(link)
 sleep(2)
 auth_link , auth_text = find_author(driver)
 content = find_content(driver)+find_content_background(driver)
 reaction_All ,  reaction_Like , reaction_Love, reaction_Care , reaction_Wow , reaction_Haha , reaction_Angry , reaction_Huhu = count_react_item(driver , link)
 link_video = find_link_video(driver)
-text_share = find_link_share(driver)
+link_share , text_share = find_link_share(driver)
+content_share = find_content_share(driver)
 print(auth_link , auth_text)    
 print(content)
-print(text_share)
+print(link_share)
+print(text_share+content_share)
 print(reaction_All)
 print(reaction_Love)
 print(reaction_Wow)
