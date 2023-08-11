@@ -44,11 +44,10 @@ def login(driver):
     driver.get('https://www.facebook.com/')
     sleep(2)
  
-def get_link(driver , link):
+def get_link(driver , link , csv_filename):
     sleep(1.75)
     driver.get(link)
     sleep(2)
-    csv_filename = "full_story_links.csv"
 
     if not os.path.exists(csv_filename) or os.path.getsize(csv_filename) == 0:
         with open(csv_filename, mode="w", newline="", encoding="utf-8") as csv_file:
@@ -649,84 +648,93 @@ def main():
     driver = uc.Chrome(options = chrome_options)
 
     login(driver)    
+    
 # Tạo link dựa trên từ vừa nhập
-    search_term = input("Nhập từ cần tìm kiếm: ")
+    while True:
+        search_term = input("Nhập từ cần tìm kiếm (nhập 0 để dừng): ")
+        
+        if search_term == '0':
+            print("Chương trình đã dừng.")
+            return
+        
+        # Tạo tên file CSV dựa trên search_term
+        csv_filename = f"{search_term}_link.csv"
 
-    # Mã hóa từ cần tìm kiếm
-    encoded_search_term = search_term.replace(' ', '%20')
+        # Mã hóa từ cần tìm kiếm
+        encoded_search_term = search_term.replace(' ', '%20')
 
-    # Tạo link dựa trên từ vừa mã hóa
-    base_url = 'https://mbasic.facebook.com/search/posts?q='
-    filters = '&filters=eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D'
-    link_find = base_url + encoded_search_term + filters
+        # Tạo link dựa trên từ vừa mã hóa
+        base_url = 'https://mbasic.facebook.com/search/posts?q='
+        filters = '&filters=eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D'
+        link_find = base_url + encoded_search_term + filters
+        
 
+        get_link(driver , link_find ,csv_filename )
+        df_link = pd.read_csv(csv_filename) 
+        p_link = df_link['Full_Story_Links'].to_list()
+        comment_numbers = df_link['Number_comments'].to_list()
+        if os.path.exists('data23.json'):
+            with open('data23.json', 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        else:
+            data = {}
 
-    get_link(driver , link_find)
-    df_link = pd.read_csv('full_story_links.csv') 
-    p_link = df_link['Full_Story_Links'].to_list()
-    comment_numbers = df_link['Number_comments'].to_list()
-    if os.path.exists('data23.json'):
-        with open('data23.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)
-    else:
-        data = {}
+        for link  , number_comment in zip(p_link ,comment_numbers) :
+                unique_key = link
+                if unique_key not in data:
+                    sleep(random.uniform(2.25, 5.5) )
+                    driver.get(link)
+                    sleep(random.uniform(2.25, 5.5) )
+                    auth_link , auth_text = find_author(driver)
+                    content = find_content(driver)+find_content_background(driver)
+                    reaction_All ,  reaction_Like , reaction_Love, reaction_Care , reaction_Wow , reaction_Haha , reaction_Angry , reaction_Huhu = count_react_item(driver , link)
+                    link_video = find_link_video(driver)
+                    link_author_share , text_share = find_link_share(driver)
+                    content_share = find_content_share(driver)
+                    time_text = find_time(driver)
+                    time_process  , _= getCreatedTime(time_text)
+                    # In kết quả
+                    image_links = find_all_images(driver , link)
+                    auth_links_comments ,auth_names_comments ,  comments = crawl_comments(driver)
+                    data_line = {"Link_post": link, 
+                                    "author":{ 'author_link': auth_link ,  
+                                            'auth_name': auth_text
+                                        } 
+                                ,"time":time_process , "content": content , 
+                                "share_post":{
+                                    'link_author_share: ' : link_author_share ,
+                                    'author_share: ' : text_share ,
+                                    'content_share: ' : content_share,
+                                    
+                                } ,
+                                "video_only": link_video , 
+                                "image_post_list":   image_links ,
+                            
+                                "number_reaction": {"Like": reaction_Like, "Love": reaction_Love , 
+                                            "Care": reaction_Care , "Wow": reaction_Wow , 
+                                            "Haha": reaction_Haha , "Angry": reaction_Angry,
+                                            "Huhu": reaction_Huhu,
+                                            "All_react": reaction_All , 
+                                    },
+                                "comment":{
+                                    "number_of_comments":number_comment , 
+                                    "account_links_comment": auth_links_comments,
+                                    "name_comment_list" : auth_names_comments ,
+                                    "comment_list": comments  , 
+                                } }
 
-    for link  , number_comment in zip(p_link ,comment_numbers) :
-            unique_key = link
-            if unique_key not in data:
-                sleep(random.uniform(2.25, 5.5) )
-                driver.get(link)
-                sleep(random.uniform(2.25, 5.5) )
-                auth_link , auth_text = find_author(driver)
-                content = find_content(driver)+find_content_background(driver)
-                reaction_All ,  reaction_Like , reaction_Love, reaction_Care , reaction_Wow , reaction_Haha , reaction_Angry , reaction_Huhu = count_react_item(driver , link)
-                link_video = find_link_video(driver)
-                link_author_share , text_share = find_link_share(driver)
-                content_share = find_content_share(driver)
-                time_text = find_time(driver)
-                time_process  , _= getCreatedTime(time_text)
-                # In kết quả
-                image_links = find_all_images(driver , link)
-                auth_links_comments ,auth_names_comments ,  comments = crawl_comments(driver)
-                data_line = {"Link_post": link, 
-                                "author":{ 'author_link': auth_link ,  
-                                        'auth_name': auth_text
-                                    } 
-                            ,"time":time_process , "content": content , 
-                            "share_post":{
-                                'link_author_share: ' : link_author_share ,
-                                'author_share: ' : text_share ,
-                                'content_share: ' : content_share,
-                                
-                            } ,
-                            "video_only": link_video , 
-                            "image_post_list":   image_links ,
-                        
-                            "number_reaction": {"Like": reaction_Like, "Love": reaction_Love , 
-                                        "Care": reaction_Care , "Wow": reaction_Wow , 
-                                        "Haha": reaction_Haha , "Angry": reaction_Angry,
-                                        "Huhu": reaction_Huhu,
-                                        "All_react": reaction_All , 
-                                },
-                            "comment":{
-                                "number_of_comments":number_comment , 
-                                "account_links_comment": auth_links_comments,
-                                "name_comment_list" : auth_names_comments ,
-                                "comment_list": comments  , 
-                            } }
-
-                # crawl commen
-            
-                data[unique_key] = data_line
-                print(f"Đã thêm mới phần tử với key: {unique_key}")
-                print(json.dumps(data_line, ensure_ascii=False, indent=4))
-            else:
-                print(f"Phần tử với key: {unique_key} đã tồn tại!")
-
+                    # crawl commen
                 
-            with open('data23.json', 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-                f.write('\n')
+                    data[unique_key] = data_line
+                    print(f"Đã thêm mới phần tử với key: {unique_key}")
+                    print(json.dumps(data_line, ensure_ascii=False, indent=4))
+                else:
+                    print(f"Phần tử với key: {unique_key} đã tồn tại!")
+
+                    
+                with open('data23.json', 'w', encoding='utf-8') as f:
+                    json.dump(data, f, ensure_ascii=False, indent=4)
+                    f.write('\n')
                 
                 
                 
