@@ -33,11 +33,27 @@ chrome_options.add_argument('--no-sandbox')
 chrome_options.add_experimental_option('prefs', {'intl.accept_languages': 'en,en_US'})
 chrome_options.add_argument("--disable-notification")
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
-chrome_options.add_argument(f'user-agent={user_agent}') 
+chrome_options.add_argument(f'user-agent={user_agent}')
+def login(driver):
+    driver.get('https://www.facebook.com/')
+    sleep(3)
+    cookies = pickle.load(open("my_cookie_2.pkl" , "rb"))
+    for cookie in cookies:
+        driver.add_cookie(cookie)
+    sleep(3)
+    driver.get('https://www.facebook.com/')
+    sleep(2)
+ 
 def get_link(driver , link):
     sleep(1.75)
     driver.get(link)
     sleep(2)
+    csv_filename = "full_story_links.csv"
+
+    if not os.path.exists(csv_filename) or os.path.getsize(csv_filename) == 0:
+        with open(csv_filename, mode="w", newline="", encoding="utf-8") as csv_file:
+            csv_writer = csv.writer(csv_file)
+            csv_writer.writerow(["Full_Story_Links", "Number_comments"])
 
     while True:
         try:
@@ -47,7 +63,6 @@ def get_link(driver , link):
 
             # Đọc nội dung hiện tại của file CSV để xác định những link đã ghi vào trước đó
             existing_links = set()
-            csv_filename = "full_story_links.csv"
             if os.path.isfile(csv_filename):
                 with open(csv_filename, mode="r", newline="", encoding="utf-8") as csv_file:
                     csv_reader = csv.reader(csv_file)
@@ -83,13 +98,13 @@ def get_link(driver , link):
                     csv_writer.writerow([link, comment_number])
 
             # Trích xuất nội dung text từ tất cả thẻ p con bên trong thẻ div tìm được
-            sleep(2)
+            sleep(random.uniform(2.25, 5.5) )
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             see_more_link = driver.find_element(By.XPATH, "//div[contains(@id, 'see_more')]//a")
             see_more_href = see_more_link.get_attribute("href")
-            sleep(1.5)
+            sleep(random.uniform(2.25, 5.5) )
             driver.get(see_more_href)
-            sleep(1.5)
+            sleep(random.uniform(2.25, 5.5) )
 
             # Tiếp tục xử lý và ghi dữ liệu vào file CSV nếu cần
 
@@ -197,10 +212,10 @@ def count_react_item(driver , link):
 
 # Lấy giá trị href từ thẻ a
     link_href = link_element.get_attribute('href')
-    sleep(5)
+    sleep(random.uniform(2.25, 5.5) )
     driver.get(link_href)
     
-    sleep(5)
+    sleep(random.uniform(2.25, 5.5) )
     
     # Duyệt qua từng thẻ div và tìm các thẻ con có arial-label chứa các reaction như "Like", "Haha", ...
     reaction_Like = count_react(driver , "Like")
@@ -211,9 +226,9 @@ def count_react_item(driver , link):
     reaction_Angry = count_react(driver , "Angry")
     reaction_Huhu = count_react(driver , "Huhu")
     reaction_All = reaction_Like+reaction_Love+reaction_Care+reaction_Wow+reaction_Haha+reaction_Angry+reaction_Huhu
-    sleep(5)
+    sleep(random.uniform(2.25, 5.5) )
     driver.get(link)
-    sleep(5)
+    sleep(random.uniform(2.25, 5.5) )
 
     return reaction_All ,  reaction_Like , reaction_Love, reaction_Care , reaction_Wow , reaction_Haha , reaction_Angry , reaction_Huhu
 def find_all_images(driver , link):
@@ -256,8 +271,10 @@ def find_all_images(driver , link):
             if id_match not in ids_hrefs:
                 image_links_a.append(next_link)
                 ids_hrefs.append(id_match)
+                sleep(random.uniform(2.25, 5.5) )
+
                 driver.get(next_link)
-                sleep(5)
+                sleep(random.uniform(2.25, 5.5) )
                 abbr_element_next  = driver.find_element(By.XPATH, '//div[@data-ft=\'{"tn":",g"}\']//abbr')
         # Trích xuất nội dung text từ tất cả thẻ p con bên trong thẻ div tìm được
                 time_image_next = abbr_element_next.text
@@ -269,9 +286,9 @@ def find_all_images(driver , link):
 
             else:
                 break
-        sleep(5)
+        sleep(random.uniform(2.25, 5.5) )
         driver.get(link)
-        sleep(5)
+        sleep(random.uniform(2.25, 5.5) )
     
     return image_links
 def find_link_video(driver):
@@ -590,12 +607,18 @@ def crawl_comments(driver):
     
     while True:
         try:
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            sleep(1)
-            driver.execute_script("window.scrollTo(0, 0);")
-            sleep(1)
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            sleep(1)
+            for i in range(3):
+                scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                sleep(scroll_delay)
+
+                scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
+                driver.execute_script("window.scrollTo(0, 0);")
+                sleep(scroll_delay)
+
+                scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                sleep(scroll_delay)
             div_comment_elements = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
             auth_links, auth_names, div_texts = extract_info_from_divs(div_comment_elements)
             auth_links_comments.extend(auth_links)
@@ -612,9 +635,9 @@ def crawl_comments(driver):
                 break
 
             link = a_element.get_attribute('href')
-            sleep(5)
+            sleep(random.uniform(2.25, 5.5) )
             driver.get(link)
-            sleep(5)
+            sleep(random.uniform(2.25, 5.5) )
         except Exception as e:
             print(e)
             break
@@ -625,16 +648,18 @@ def main():
     # driver = webdriver.Chrome("C:\\Users\\Admin\\Downloads\\chromdriv\\chromedriver.exe" , options=chrome_options)
     driver = uc.Chrome(options = chrome_options)
 
-    driver.get('https://www.facebook.com/')
-    sleep(1.5)
-    cookies = pickle.load(open("my_cookie_3.pkl" , "rb"))
-    for cookie in cookies:
-        driver.add_cookie(cookie)
-    sleep(1.5)
-    driver.get('https://www.facebook.com/')
-    sleep(1.5)
+    login(driver)    
+# Tạo link dựa trên từ vừa nhập
+    search_term = input("Nhập từ cần tìm kiếm: ")
 
-    link_find = 'https://mbasic.facebook.com/search/posts?q=phandong&filters=eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D'
+    # Mã hóa từ cần tìm kiếm
+    encoded_search_term = search_term.replace(' ', '%20')
+
+    # Tạo link dựa trên từ vừa mã hóa
+    base_url = 'https://mbasic.facebook.com/search/posts?q='
+    filters = '&filters=eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D'
+    link_find = base_url + encoded_search_term + filters
+
 
     get_link(driver , link_find)
     df_link = pd.read_csv('full_story_links.csv') 
@@ -647,52 +672,51 @@ def main():
         data = {}
 
     for link  , number_comment in zip(p_link ,comment_numbers) :
-            sleep(5)
-            driver.get(link)
-            sleep(5)
-            auth_link , auth_text = find_author(driver)
-            content = find_content(driver)+find_content_background(driver)
-            reaction_All ,  reaction_Like , reaction_Love, reaction_Care , reaction_Wow , reaction_Haha , reaction_Angry , reaction_Huhu = count_react_item(driver , link)
-            link_video = find_link_video(driver)
-            link_author_share , text_share = find_link_share(driver)
-            content_share = find_content_share(driver)
-            time_text = find_time(driver)
-            time_process  , _= getCreatedTime(time_text)
-            # In kết quả
-            image_links = find_all_images(driver , link)
-            auth_links_comments ,auth_names_comments ,  comments = crawl_comments(driver)
-            data_line = {"Link_post": link, 
-                            "author":{ 'author_link': auth_link ,  
-                                    'auth_name': auth_text
-                                } 
-                        ,"time":time_process , "content": content , 
-                        "share_post":{
-                            'link_author_share: ' : link_author_share ,
-                            'author_share: ' : text_share ,
-                            'content_share: ' : content_share,
-                            
-                        } ,
-                        "video_only": link_video , 
-                        "image_post_list":   image_links ,
-                    
-                        "number_reaction": {"Like": reaction_Like, "Love": reaction_Love , 
-                                    "Care": reaction_Care , "Wow": reaction_Wow , 
-                                    "Haha": reaction_Haha , "Angry": reaction_Angry,
-                                    "Huhu": reaction_Huhu,
-                                    "All_react": reaction_All , 
-                            },
-                        "comment":{
-                            "number_of_comments":number_comment , 
-                            "account_links_comment": auth_links_comments,
-                            "name_comment_list" : auth_names_comments ,
-                            "comment_list": comments  , 
-                        } }
-
-                # crawl comment
-
             unique_key = link
-            
             if unique_key not in data:
+                sleep(random.uniform(2.25, 5.5) )
+                driver.get(link)
+                sleep(random.uniform(2.25, 5.5) )
+                auth_link , auth_text = find_author(driver)
+                content = find_content(driver)+find_content_background(driver)
+                reaction_All ,  reaction_Like , reaction_Love, reaction_Care , reaction_Wow , reaction_Haha , reaction_Angry , reaction_Huhu = count_react_item(driver , link)
+                link_video = find_link_video(driver)
+                link_author_share , text_share = find_link_share(driver)
+                content_share = find_content_share(driver)
+                time_text = find_time(driver)
+                time_process  , _= getCreatedTime(time_text)
+                # In kết quả
+                image_links = find_all_images(driver , link)
+                auth_links_comments ,auth_names_comments ,  comments = crawl_comments(driver)
+                data_line = {"Link_post": link, 
+                                "author":{ 'author_link': auth_link ,  
+                                        'auth_name': auth_text
+                                    } 
+                            ,"time":time_process , "content": content , 
+                            "share_post":{
+                                'link_author_share: ' : link_author_share ,
+                                'author_share: ' : text_share ,
+                                'content_share: ' : content_share,
+                                
+                            } ,
+                            "video_only": link_video , 
+                            "image_post_list":   image_links ,
+                        
+                            "number_reaction": {"Like": reaction_Like, "Love": reaction_Love , 
+                                        "Care": reaction_Care , "Wow": reaction_Wow , 
+                                        "Haha": reaction_Haha , "Angry": reaction_Angry,
+                                        "Huhu": reaction_Huhu,
+                                        "All_react": reaction_All , 
+                                },
+                            "comment":{
+                                "number_of_comments":number_comment , 
+                                "account_links_comment": auth_links_comments,
+                                "name_comment_list" : auth_names_comments ,
+                                "comment_list": comments  , 
+                            } }
+
+                # crawl commen
+            
                 data[unique_key] = data_line
                 print(f"Đã thêm mới phần tử với key: {unique_key}")
                 print(json.dumps(data_line, ensure_ascii=False, indent=4))
