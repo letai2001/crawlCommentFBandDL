@@ -30,10 +30,11 @@ import undetected_chromedriver as uc
 
 chrome_options = Options()
 chrome_options.add_argument('--no-sandbox')
-chrome_options.add_experimental_option('prefs', {'intl.accept_languages': 'en,en_US'})
 chrome_options.add_argument("--disable-notification")
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
 chrome_options.add_argument(f'user-agent={user_agent}')
+chrome_options.add_experimental_option('debuggerAddress', 'localhost:9222')
+
 def login(driver):
     driver.get('https://www.facebook.com/')
     sleep(3)
@@ -43,16 +44,44 @@ def login(driver):
     sleep(3)
     driver.get('https://www.facebook.com/')
     sleep(2)
- 
+def extract_id(link):
+    try:
+        id_match = re.search(r'story_fbid=([^&]+)', link)
+        if id_match:
+            id_value = id_match.group(1)
+        else:
+            group_id_match = re.search(r'/groups/(\d+)/', link)
+            if group_id_match:
+                id_value = group_id_match.group(1)
+            else:
+                id_value = None
+    except Exception as e:
+        print(f"Error: {e}")
+    return id_value
 def get_link(driver , link , csv_filename):
     sleep(1.75)
     driver.get(link)
     sleep(2)
-
     if not os.path.exists(csv_filename) or os.path.getsize(csv_filename) == 0:
         with open(csv_filename, mode="w", newline="", encoding="utf-8") as csv_file:
             csv_writer = csv.writer(csv_file)
             csv_writer.writerow(["Full_Story_Links", "Number_comments"])
+    existing_links = set()
+                # Đọc nội dung hiện tại của file CSV để xác định những link đã ghi vào trước đó
+    if os.path.isfile(csv_filename):
+        with open(csv_filename, mode="r", newline="", encoding="utf-8") as csv_file:
+            csv_reader = csv.reader(csv_file)
+            header = next(csv_reader)  # Đọc tiêu đề cột
+            if header != ["Full_Story_Links", "Number_comments"]:
+                # Thêm tiêu đề cột nếu không tồn tại
+                with open(csv_filename, mode="w", newline="", encoding="utf-8") as new_csv_file:
+                    csv_writer = csv.writer(new_csv_file)
+                    csv_writer.writerow(["Full_Story_Links", "Number_comments"])
+            else:
+                for row in csv_reader:
+                        link_row = row[0] 
+                        # Truy cập cột "Full_Story_Links" (cột thứ 0)
+                        existing_links.add(extract_id(link_row))
 
     while True:
         try:
@@ -60,27 +89,15 @@ def get_link(driver , link , csv_filename):
             full_story_links = []
             number_comments = []
 
-            # Đọc nội dung hiện tại của file CSV để xác định những link đã ghi vào trước đó
-            existing_links = set()
-            if os.path.isfile(csv_filename):
-                with open(csv_filename, mode="r", newline="", encoding="utf-8") as csv_file:
-                    csv_reader = csv.reader(csv_file)
-                    header = next(csv_reader)  # Đọc tiêu đề cột
-                    if header != ["Full_Story_Links", "Number_comments"]:
-                        # Thêm tiêu đề cột nếu không tồn tại
-                        with open(csv_filename, mode="w", newline="", encoding="utf-8") as new_csv_file:
-                            csv_writer = csv.writer(new_csv_file)
-                            csv_writer.writerow(["Full_Story_Links", "Number_comments"])
-                    else:
-                        for row in csv_reader:
-                            existing_links.add(row[0])  # Lưu các link đã ghi vào danh sách
 
             for div in div_elements:
                 full_story_element = div.find_element(By.XPATH, ".//a[text()='Full Story']")
                 full_story_link = full_story_element.get_attribute('href')
-                if full_story_link not in existing_links:  # Kiểm tra xem link đã tồn tại hay chưa
+                
+                if extract_id(full_story_link) not in existing_links:  # Kiểm tra xem link đã tồn tại hay chưa
                     print("Adding new link to list:", full_story_link)
                     full_story_links.append(full_story_link)
+                    existing_links.add(extract_id(full_story_link))
                     try:
                         comment_element = div.find_element(By.XPATH, ".//a[contains(text(),'Comment')]")
                         comment_text = comment_element.get_attribute('text')
@@ -238,18 +255,17 @@ def find_all_images(driver , link):
     # Lưu trữ các liên kết hình ảnh
     image_links = [img_element.get_attribute("src") for img_element in img_elements]
     image_links_a = [href_img_element.get_attribute("href") for href_img_element in href_img_elements]
-    ids_hrefs = [re.search(r'fbid=(\d+)', link).group(1) for\
-        link in image_links_a if re.search(r'fbid=(\d+)', link)]
+    ids_hrefs = [re.search(r'fbid=(\d+)', link).group(1) for link in image_links_a if re.search(r'fbid=(\d+)', link)]
     start_meet_video = 0
     if len(image_links_a) >1:
         driver.get(image_links_a[len(image_links_a)-1])
-        abbr_element  = driver.find_element(By.XPATH, '//div[@data-ft=\'{"tn":",g"}\']//abbr')
-        time_image = abbr_element.text
+        abbr_element  = driver.find_elements(By.XPATH, '//div[@data-ft=\'{"tn":",g"}\']//abbr')
+        time_image = abbr_element[0].text
 
         while(True):
             xpath_next = '//a[starts-with(@href, \'/photo.php?\') and normalize-space()="Next"]'
-            next_element = driver.find_element(By.XPATH, xpath_next)
-            next_link = next_element.get_attribute("href")
+            next_element = driver.find_elements(By.XPATH, xpath_next)
+            next_link = next_element[0].get_attribute("href")
 
             if(start_meet_video != 0):
                 next_link = 'Previous'
@@ -603,7 +619,7 @@ def crawl_comments(driver):
     
     div_prev_elements = driver.find_elements(By.XPATH, "//div[contains(@id, 'see_prev')]")
     div_more_elements = driver.find_elements(By.XPATH, "//div[contains(@id, 'see_next')]")
-    
+    link_count = 0
     while True:
         try:
             for i in range(3):
@@ -623,6 +639,7 @@ def crawl_comments(driver):
             auth_links_comments.extend(auth_links)
             auth_names_comments.extend(auth_names)
             comments.extend(div_texts)
+              
 
             if len(div_more_elements) - len(div_prev_elements) < 0:
                 div_prev_elements = driver.find_elements(By.XPATH, "//div[contains(@id, 'see_prev')]")
@@ -636,7 +653,31 @@ def crawl_comments(driver):
             link = a_element.get_attribute('href')
             sleep(random.uniform(2.25, 5.5) )
             driver.get(link)
-            sleep(random.uniform(2.25, 5.5) )
+            link_count += 1
+            if (link_count % 3 == 0 or link_count % 5 == 0 or link_count % 7 == 0) and link_count != 0:
+                sleep(random.uniform(20.5, 50.3))
+                xpath_home = "//a[contains(@href, 'home')]"
+                home_element = driver.find_element(By.XPATH , xpath_home)
+                href_home = home_element.get_attribute("href")
+                driver.get(href_home)
+                sleep(random.uniform(10.5, 24.3))
+                driver.get(link)
+            if(link_count % 4 == 0 or link_count % 9 == 0 ) and link_count != 0:
+                try:
+                    comment_strings = ["anh yeu em", "vợ t", "Chồng t", "Đừng chặn bố nữa dcm mấy thằng chúng m" , "web như cc bày đặt chặn" , "hài hước vl" ]
+                    random_comment = random.choice(comment_strings)
+                    xpath_expression = "//textarea[@id='composerInput' and @name='comment_text']"
+                    textarea_element = driver.find_element(By.XPATH , xpath_expression)
+                    textarea_element.send_keys(random_comment)
+                    xpath_expression = "//input[@value='Comment' and @type='submit']"
+                    comment_button = driver.find_element(By.XPATH , xpath_expression)
+
+                    # Thực hiện click vào nút Comment
+                    comment_button.click()
+                except Exception as e:
+                    pass
+                sleep(10)
+
         except Exception as e:
             print(e)
             break
@@ -673,17 +714,52 @@ def main():
         df_link = pd.read_csv(csv_filename) 
         p_link = df_link['Full_Story_Links'].to_list()
         comment_numbers = df_link['Number_comments'].to_list()
-        if os.path.exists('data23.json'):
-            with open('data23.json', 'r', encoding='utf-8') as f:
-                data = json.load(f)
+        if os.path.exists('data.json'):
+            if os.path.getsize('data.json') == 0:
+                data = {}
+            else:
+                with open('data.json', 'r', encoding='utf-8') as f:
+                    data = json.load(f)
         else:
             data = {}
-
+        link_count = 8
         for link  , number_comment in zip(p_link ,comment_numbers) :
                 unique_key = link
                 if unique_key not in data:
                     sleep(random.uniform(2.25, 5.5) )
+                    
                     driver.get(link)
+                    link_count +=1
+                    print(link_count)
+                    if(link_count % 4 == 0 or link_count % 9 == 0 or link_count % 8 ==0) and link_count != 0:
+                        comment_strings = ["Hài", "Ngu nó vừa thôi", "Chả ra cái gì", "Đừng chặn bố nữa dcm mấy thằng chúng m" , "web như cc bày đặt chặn" , "hài hước vl" ]
+                        random_comment = random.choice(comment_strings)
+                        xpath_expression = "//textarea[@id='composerInput' and @name='comment_text']"
+                        try:
+                            textarea_element = driver.find_element(By.XPATH , xpath_expression)
+                            driver.execute_script("arguments[0].scrollIntoView();window.scrollBy(0, -200);", textarea_element)
+
+                            textarea_element.send_keys(random_comment)
+                            xpath_expression = "//input[@value='Comment' and @type='submit']"
+                            comment_button = driver.find_element(By.XPATH , xpath_expression)
+
+                            # Thực hiện click vào nút Comment
+                            comment_button.click()
+                        except Exception as e:
+                            pass
+
+                    if (link_count % 3 == 0 or link_count % 5 == 0 or link_count % 7 == 0) and link_count != 0:
+                        sleep(random.uniform(20.5, 50.3))
+                        xpath_home = "//a[contains(@href, 'home')]"
+                        home_element = driver.find_element(By.XPATH , xpath_home)
+                        href_home = home_element.get_attribute("href")
+                        driver.get(href_home)
+                        sleep(random.uniform(10.5, 24.3))
+                        driver.get(link)
+
+                        sleep(10)
+
+
                     sleep(random.uniform(2.25, 5.5) )
                     auth_link , auth_text = find_author(driver)
                     content = find_content(driver)+find_content_background(driver)
@@ -732,7 +808,7 @@ def main():
                     print(f"Phần tử với key: {unique_key} đã tồn tại!")
 
                     
-                with open('data23.json', 'w', encoding='utf-8') as f:
+                with open('data.json', 'w', encoding='utf-8') as f:
                     json.dump(data, f, ensure_ascii=False, indent=4)
                     f.write('\n')
                 
