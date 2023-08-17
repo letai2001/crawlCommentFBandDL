@@ -36,14 +36,73 @@ chrome_options.add_argument(f'user-agent={user_agent}')
 chrome_options.add_experimental_option('debuggerAddress', 'localhost:9222')
 
 def login(driver):
-    driver.get('https://www.facebook.com/')
-    sleep(3)
-    cookies = pickle.load(open("my_cookie_2.pkl" , "rb"))
-    for cookie in cookies:
-        driver.add_cookie(cookie)
-    sleep(3)
-    driver.get('https://www.facebook.com/')
+    driver.get('https://www.facebook.com//')
+
+    txtUser = driver.find_element(By.ID , "email")
+    txtUser.send_keys('wasantha.lifel.o.gy@gmail.com')
+    sleep(2)    
+    txtPassword = driver.find_element(By.ID , "pass")
+    txtPassword.send_keys('thanhnam4321')
     sleep(2)
+    txtPassword.send_keys(Keys.ENTER)
+    sleep(10)
+def logout(driver):
+    driver.get('https://mbasic.facebook.com/')
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    xpath_expression = "//a[contains(text(), 'Logout')]"
+    logout_button = driver.find_element(By.XPATH , xpath_expression)
+    sleep(3)
+    # Thực hiện các hành động trên thẻ (ví dụ: nhấp chuột để đăng xuất)
+    logout_button.click()
+    try:
+        sleep(3)
+        value_contain = "Don't save"
+
+        # Tìm phần tử <input> dựa trên giá trị thuộc tính 'value' chứa chuỗi
+        xpath_expression = f"//input[contains(@value, \"{value_contain}\") and @type='submit']"
+        input_element = driver.find_element(By.XPATH, xpath_expression)
+        sleep(3)
+        # Thực hiện hành động nhấp chuột vào phần tử
+        input_element.click()
+    except:
+        pass
+def fake(driver , link_count , link):
+    if(link_count % 4 == 0 or link_count % 9 == 0 ) and link_count != 0:
+        comment_strings = ["Hài", "Ngu nó vừa thôi", "Chả ra cái gì", "Đừng chặn bố nữa dcm mấy thằng chúng m" , "web như cc bày đặt chặn" , "hài hước vl" ]
+        for i in range(random.randint(1, 3)):
+            random_comment = random.choice(comment_strings)
+            xpath_expression = "//textarea[@id='composerInput' and @name='comment_text']"
+            try:
+                textarea_element = driver.find_element(By.XPATH , xpath_expression)
+                driver.execute_script("arguments[0].scrollIntoView();window.scrollBy(0, -200);", textarea_element)
+
+                textarea_element.send_keys(random_comment)
+                xpath_expression = "//input[@value='Comment' and @type='submit']"
+                comment_button = driver.find_element(By.XPATH , xpath_expression)
+
+                # Thực hiện click vào nút Comment
+                comment_button.click()
+            except Exception as e:
+                sleep(10)
+                pass
+
+    if (link_count % 3 == 0 or link_count % 5 == 0 ) and link_count != 0:
+        sleep(random.uniform(20.5, 50.3))
+        xpath_home = "//a[contains(@href, 'home')]"
+        home_element = driver.find_element(By.XPATH , xpath_home)
+        href_home = home_element.get_attribute("href")
+        driver.get(href_home)
+        sleep(6)
+        logout(driver)
+        
+        sleep(random.uniform(20.5, 34.3))
+        login(driver)
+        sleep(6)
+        driver.get(link)
+        
+        sleep(10)
+
+
 def extract_id(link):
     try:
         id_match = re.search(r'story_fbid=([^&]+)', link)
@@ -224,27 +283,33 @@ def count_react(driver , react):
     return number
 
 def count_react_item(driver , link):
-    link_element = driver.find_element(By.XPATH, '//div[contains(@id, "sentence_")]//a[contains(@href, "/ufi/reaction/profile/")]')
+    reaction_All = reaction_Like = reaction_Love = reaction_Care = reaction_Wow = reaction_Haha = reaction_Angry = reaction_Huhu = 0
+    try:
+        link_element = driver.find_element(By.XPATH, '//div[contains(@id, "sentence_")]//a[contains(@href, "/ufi/reaction/profile/")]')
 
-# Lấy giá trị href từ thẻ a
-    link_href = link_element.get_attribute('href')
-    sleep(random.uniform(2.25, 5.5) )
-    driver.get(link_href)
+    # Lấy giá trị href từ thẻ a
+        link_href = link_element.get_attribute('href')
+        # sleep(random.uniform(2.25, 5.5) )
+        driver.get(link_href)
+        
+        # sleep(random.uniform(2.25, 5.5) )
+        
+        # Duyệt qua từng thẻ div và tìm các thẻ con có arial-label chứa các reaction như "Like", "Haha", ...
+        reaction_Like = count_react(driver , "Like")
+        reaction_Love = count_react(driver , "Love")
+        reaction_Care = count_react(driver , "Care")
+        reaction_Wow = count_react(driver , "Wow")
+        reaction_Haha = count_react(driver , "Haha")
+        reaction_Angry = count_react(driver , "Angry")
+        reaction_Huhu = count_react(driver , "Huhu")
+        reaction_All = reaction_Like+reaction_Love+reaction_Care+reaction_Wow+reaction_Haha+reaction_Angry+reaction_Huhu
+        # sleep(random.uniform(2.25, 5.5) )
+        driver.get(link)
+    except Exception as e:
+        print(e)
+        pass
+    # sleep(random.uniform(2.25, 5.5) )
     
-    sleep(random.uniform(2.25, 5.5) )
-    
-    # Duyệt qua từng thẻ div và tìm các thẻ con có arial-label chứa các reaction như "Like", "Haha", ...
-    reaction_Like = count_react(driver , "Like")
-    reaction_Love = count_react(driver , "Love")
-    reaction_Care = count_react(driver , "Care")
-    reaction_Wow = count_react(driver , "Wow")
-    reaction_Haha = count_react(driver , "Haha")
-    reaction_Angry = count_react(driver , "Angry")
-    reaction_Huhu = count_react(driver , "Huhu")
-    reaction_All = reaction_Like+reaction_Love+reaction_Care+reaction_Wow+reaction_Haha+reaction_Angry+reaction_Huhu
-    sleep(random.uniform(2.25, 5.5) )
-    driver.get(link)
-    sleep(random.uniform(2.25, 5.5) )
 
     return reaction_All ,  reaction_Like , reaction_Love, reaction_Care , reaction_Wow , reaction_Haha , reaction_Angry , reaction_Huhu
 def find_all_images(driver , link):
@@ -286,10 +351,10 @@ def find_all_images(driver , link):
             if id_match not in ids_hrefs:
                 image_links_a.append(next_link)
                 ids_hrefs.append(id_match)
-                sleep(random.uniform(2.25, 5.5) )
+                # sleep(random.uniform(2.25, 5.5) )
 
                 driver.get(next_link)
-                sleep(random.uniform(2.25, 5.5) )
+                # sleep(random.uniform(2.25, 5.5) )
                 abbr_element_next  = driver.find_element(By.XPATH, '//div[@data-ft=\'{"tn":",g"}\']//abbr')
         # Trích xuất nội dung text từ tất cả thẻ p con bên trong thẻ div tìm được
                 time_image_next = abbr_element_next.text
@@ -301,9 +366,9 @@ def find_all_images(driver , link):
 
             else:
                 break
-        sleep(random.uniform(2.25, 5.5) )
+        # sleep(random.uniform(2.25, 5.5) )
         driver.get(link)
-        sleep(random.uniform(2.25, 5.5) )
+        # sleep(random.uniform(2.25, 5.5) )
     
     return image_links
 def find_link_video(driver):
@@ -622,18 +687,18 @@ def crawl_comments(driver):
     link_count = 0
     while True:
         try:
-            for i in range(3):
-                scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                sleep(scroll_delay)
+            # for i in range(3):
+            #     scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
+            #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            #     sleep(scroll_delay)
 
-                scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
-                driver.execute_script("window.scrollTo(0, 0);")
-                sleep(scroll_delay)
+            #     scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
+            #     driver.execute_script("window.scrollTo(0, 0);")
+            #     sleep(scroll_delay)
 
-                scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                sleep(scroll_delay)
+            #     scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
+            #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            #     sleep(scroll_delay)
             div_comment_elements = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
             auth_links, auth_names, div_texts = extract_info_from_divs(div_comment_elements)
             auth_links_comments.extend(auth_links)
@@ -651,33 +716,10 @@ def crawl_comments(driver):
                 break
 
             link = a_element.get_attribute('href')
-            sleep(random.uniform(2.25, 5.5) )
+            # sleep(random.uniform(2.25, 5.5) )
             driver.get(link)
             link_count += 1
-            if (link_count % 3 == 0 or link_count % 5 == 0 or link_count % 7 == 0) and link_count != 0:
-                sleep(random.uniform(20.5, 50.3))
-                xpath_home = "//a[contains(@href, 'home')]"
-                home_element = driver.find_element(By.XPATH , xpath_home)
-                href_home = home_element.get_attribute("href")
-                driver.get(href_home)
-                sleep(random.uniform(10.5, 24.3))
-                driver.get(link)
-            if(link_count % 4 == 0 or link_count % 9 == 0 ) and link_count != 0:
-                try:
-                    comment_strings = ["anh yeu em", "vợ t", "Chồng t", "Đừng chặn bố nữa dcm mấy thằng chúng m" , "web như cc bày đặt chặn" , "hài hước vl" ]
-                    random_comment = random.choice(comment_strings)
-                    xpath_expression = "//textarea[@id='composerInput' and @name='comment_text']"
-                    textarea_element = driver.find_element(By.XPATH , xpath_expression)
-                    textarea_element.send_keys(random_comment)
-                    xpath_expression = "//input[@value='Comment' and @type='submit']"
-                    comment_button = driver.find_element(By.XPATH , xpath_expression)
-
-                    # Thực hiện click vào nút Comment
-                    comment_button.click()
-                except Exception as e:
-                    pass
-                sleep(10)
-
+            # fake(driver , link_count , link)
         except Exception as e:
             print(e)
             break
@@ -726,39 +768,12 @@ def main():
         for link  , number_comment in zip(p_link ,comment_numbers) :
                 unique_key = link
                 if unique_key not in data:
-                    sleep(random.uniform(2.25, 5.5) )
+                    # sleep(random.uniform(2.25, 5.5) )
                     
                     driver.get(link)
                     link_count +=1
                     print(link_count)
-                    if(link_count % 4 == 0 or link_count % 9 == 0 or link_count % 8 ==0) and link_count != 0:
-                        comment_strings = ["Hài", "Ngu nó vừa thôi", "Chả ra cái gì", "Đừng chặn bố nữa dcm mấy thằng chúng m" , "web như cc bày đặt chặn" , "hài hước vl" ]
-                        random_comment = random.choice(comment_strings)
-                        xpath_expression = "//textarea[@id='composerInput' and @name='comment_text']"
-                        try:
-                            textarea_element = driver.find_element(By.XPATH , xpath_expression)
-                            driver.execute_script("arguments[0].scrollIntoView();window.scrollBy(0, -200);", textarea_element)
-
-                            textarea_element.send_keys(random_comment)
-                            xpath_expression = "//input[@value='Comment' and @type='submit']"
-                            comment_button = driver.find_element(By.XPATH , xpath_expression)
-
-                            # Thực hiện click vào nút Comment
-                            comment_button.click()
-                        except Exception as e:
-                            pass
-
-                    if (link_count % 3 == 0 or link_count % 5 == 0 or link_count % 7 == 0) and link_count != 0:
-                        sleep(random.uniform(20.5, 50.3))
-                        xpath_home = "//a[contains(@href, 'home')]"
-                        home_element = driver.find_element(By.XPATH , xpath_home)
-                        href_home = home_element.get_attribute("href")
-                        driver.get(href_home)
-                        sleep(random.uniform(10.5, 24.3))
-                        driver.get(link)
-
-                        sleep(10)
-
+                    # fake(driver , link_count , link)
 
                     sleep(random.uniform(2.25, 5.5) )
                     auth_link , auth_text = find_author(driver)
