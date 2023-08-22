@@ -27,17 +27,23 @@ import calendar
 import os
 import csv
 import undetected_chromedriver as uc
+from webdriver_manager.chrome import ChromeDriverManager
+
+latestchromedriver = ChromeDriverManager().install()
+
 
 chrome_options = Options()
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument("--disable-notification")
-user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
-chrome_options.add_argument(f'user-agent={user_agent}')
+chrome_options.add_argument("--incognito")
+
+# user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
+# chrome_options.add_argument(f'user-agent={user_agent}')
 chrome_options.add_argument('--disable-blink-features=AutomationControlled') 
 # chrome_options.add_argument('--ignore-certificate-errors')
 # chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
 # chrome_options.add_experimental_option('useAutomationExtension', False)
-chrome_options.add_experimental_option('debuggerAddress', 'localhost:9222')
+# chrome_options.add_experimental_option('debuggerAddress', 'localhost:9222')
 # options.add_argument('--disable-blink-features=AutomationControlled')
 # options.add_argument("--start-maximized")
 # options.add_argument('--disable-infobars')
@@ -47,9 +53,11 @@ chrome_options.add_experimental_option('debuggerAddress', 'localhost:9222')
 # options.add_argument('--disable-translate')
 # options.add_argument('--disable-web-security')
 # options.add_argument('--disable-extensions')
-driver = webdriver.Chrome("C:\\Users\\Admin\\Downloads\\chromdriv\\chromedriver.exe" , options=chrome_options)
+driver = webdriver.Chrome("C:\\Users\\Admin\\Downloads\\chromdriv\\chromedriver-win64\\chromedriver.exe" , options=chrome_options)
+link_get_story = 0
+# driver = uc.Chrome(driver_executable_path=latestchromedriver , options = chrome_options)
 def logout(driver):
-    driver.get('https://mbasic.facebook.com/')
+    driver.get('https://mbasic.facebook.com/home.php?')
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     xpath_expression = "//a[contains(text(), 'Logout')]"
     logout_button = driver.find_element(By.XPATH , xpath_expression)
@@ -72,7 +80,7 @@ def login(driver):
     driver.get('https://www.facebook.com//')
 
     txtUser = driver.find_element(By.ID , "email")
-    txtUser.send_keys('wasantha.lifel.o.gy@gmail.com')
+    txtUser.send_keys('qms42009@zbock.com')
     sleep(2)    
     txtPassword = driver.find_element(By.ID , "pass")
     txtPassword.send_keys('thanhnam4321')
@@ -565,7 +573,8 @@ def extract_info_from_divs(div_comment_elements):
             pass
     return auth_links, auth_names, div_texts
 
-def crawl_comments(driver):
+def crawl_comments(driver ):
+    global link_get_story
     auth_links_comments = []
     auth_names_comments = []
     comments = []
@@ -575,18 +584,18 @@ def crawl_comments(driver):
     link_count = 1
     while len(comments)<=100:
         try:
-            # for i in range(3):
-            #     scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
-            #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            #     sleep(scroll_delay)
+            for i in range(3):
+                scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                sleep(scroll_delay)
 
-            #     scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
-            #     driver.execute_script("window.scrollTo(0, 0);")
-            #     sleep(scroll_delay)
+                scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
+                driver.execute_script("window.scrollTo(0, 0);")
+                sleep(scroll_delay)
 
-            #     scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
-            #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            #     sleep(scroll_delay)
+                scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                sleep(scroll_delay)
             div_comment_elements = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
             auth_links, auth_names, div_texts = extract_info_from_divs(div_comment_elements)
             auth_links_comments.extend(auth_links)
@@ -607,14 +616,17 @@ def crawl_comments(driver):
             link = a_element.get_attribute('href')
             sleep(random.uniform(2.25, 5.5) )
             a_element.click()
-            link_count += 1
+            link_get_story +=1  
+            print('link_get_story = ' , link_get_story)
+            driver = fake(driver , link_get_story ,link)
+            
 
             # fake(driver , link_count , link)
         except Exception as e:
             print(e)
             break
 
-    return auth_links_comments, auth_names_comments, comments , link_count
+    return auth_links_comments, auth_names_comments, comments 
 
 # driver.get('https://www.facebook.com//')
 
@@ -666,7 +678,7 @@ def get_data_from_link(driver , link , number_comment):
             time_process  , _= getCreatedTime(time_text)
             # In kết quả
             image_links = find_all_images(driver , link)
-            auth_links_comments ,auth_names_comments ,  comments , link_count_comment = crawl_comments(driver)
+            auth_links_comments ,auth_names_comments ,  comments  = crawl_comments(driver)
             data_line = {"Link_post": link, 
                             "author":{ 'author_link': auth_link ,  
                                     'auth_name': auth_text
@@ -706,33 +718,7 @@ def get_data_from_link(driver , link , number_comment):
         with open('data_new.json', 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
             f.write('\n')
-        return link_count_comment
 
-# def get_link(driver , link , csv_filename):
-#     sleep(1.75)
-#     driver.get(link)
-#     sleep(2)
-    # if not os.path.exists(csv_filename) or os.path.getsize(csv_filename) == 0:
-    #     with open(csv_filename, mode="w", newline="", encoding="utf-8") as csv_file:
-    #         csv_writer = csv.writer(csv_file)
-    #         csv_writer.writerow(["Full_Story_Links", "Number_comments"])
-    # existing_links = set()
-    #             # Đọc nội dung hiện tại của file CSV để xác định những link đã ghi vào trước đó
-    # if os.path.isfile(csv_filename):
-    #     with open(csv_filename, mode="r", newline="", encoding="utf-8") as csv_file:
-    #         csv_reader = csv.reader(csv_file)
-    #         header = next(csv_reader)  # Đọc tiêu đề cột
-    #         if header != ["Full_Story_Links", "Number_comments"]:
-    #             # Thêm tiêu đề cột nếu không tồn tại
-    #             with open(csv_filename, mode="w", newline="", encoding="utf-8") as new_csv_file:
-    #                 csv_writer = csv.writer(new_csv_file)
-    #                 csv_writer.writerow(["Full_Story_Links", "Number_comments"])
-    #         else:
-    #             for row in csv_reader:
-    #                     link_row = row[0] 
-    #                     # Truy cập cột "Full_Story_Links" (cột thứ 0)
-    #         
-    # existing_links.add(extract_id(link_row))
 if os.path.exists('data_new.json'):
     if os.path.getsize('data_new.json') == 0:
         data = {}
@@ -741,7 +727,23 @@ if os.path.exists('data_new.json'):
             data = json.load(f)
 else:
     data = {}
-see_more_href = 'https://mbasic.facebook.com/search/posts?q=ch%C3%A9m+gi%E1%BA%BFt&filters=eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D&cursor=Abrn3SPoKTUQGXfRwdQPn2HuLylnVcVLjDt_JVnevyKFrHkw9-VdIYYIpsgyRHPbXIXMqeJr0FPwOBc0lF_UUhtJ6kxE_NHplYon2d4d_WUsY-viarAhZo7va_gnDI8PYcXPV3Co44GaHuLllM73EIyGBW9YnHnbbc4WPH3vlOIZP2PxJ30bTLaSqLw8XW5RYzdxDqKSB3U3d5auOr5jMwhq4XVgZ5mrRIxVus21tqzvYp-Up3Z3n2CwXez8CFTboTCyNWzMhH9keKdHVY7nlzr3Y79iUyNhtXMFRLS1OvIhKs-rfepb693i1LsN5yGTw3vIwdKY2-XPy6nNgIvOCCLMh3apthyPuDxzjsE6FlHkZvpqXrdhe_ulHrFwZclOdfDW6hVi4s9k7a6kQhql-1JhYL-w91vG50bvreoTqmQHfjgnXskDlsQtvn3edjir5gk_n2SkOW8tSkvBojz4h2PkPtriSAWzGfIlLBWY7hfuNHeI-qFDTV8dZvEagSBdPpdsAtH_wa9o0RmocM1-xfELXvAxgN4g54_BrZDQQY_oZrMXiCcwsJ9MyLaTihafhOd4SW7jKPLgI8EkNCIjrst8KXARnfHsdOlq3U9UwKANpSqoHokMUEpxXgrRVyRcgKbufMBf4QAA6fMaIM8PJSihOOXloAFYYjiHkGVm5QVBaHVei2pDGg8ISOVxpnEPWX5XNbTXdpV-DWsG3dfIoirN7jHZCN1hOeKHiHSiwgT0Lo0BbjYFBE83-F9IZcteoyGBVNsYDqZyKlfDfsUqUrxFxBrSywQG60NSNBn1mIWKptPo2wL28NjYjT1kNEilrOQYy9beoZhPsm6fah9QhgZ0KNrmwVnbhOC5G0XBkL1ixwGvf1P74txKWrd5h40mCQvPl8suSmdaZ0jY6SGhZOMZFLVYpafK5KM3IoQc5WNV39VpTWXT8vBGP7lhW0RKeiJGy5o53f_yDh4pYS5VWfxjLMf0F8cxmf8DyDPPsIrbKA-RxW2JoBlcwOKeeSnheWJc3HoqXMAufAqjemQ3j76kCrEhQadiSbZW3bdOliz9CnDHsmFnPYvCpRMrLJQYF6FB1OUt7kRuM8Qj9AFJGH3PWfZijucqaUOAH6ixNXsGJElRHw6-Q_gX3uPMH8NB6pCyqLMubWpnvq203cVI20RBwnqmv9sUvQ5pWbsgs-Vh7lLL7MQZCenAvP7SLiXWjYm2hg8s6PzCe9qhkE42yUEydj0ysRSJOJW-WFU3IAPJmhLqjwCoy4iZwC0z68afkinbsxfNY9A7w5vYPtjuHm4kFujvrafhNsob0Of3N7lzX2AU-jBn0JunOgKaZx15wQ2NN1EGDE7-knlk_Cuq8XGz3SWx7B98KgHyiH_7_cdG10Qk0YxD0X-MAqPFOVxFduHBDRBLLOoBB1vydg5uxdMPy7qqxuOWbriRIxFzxp9VRYjVN5iz1Pmd3ucOVVKVYZisPRRPv7vcpQK5ITb7tJ8LmdU3egB4l9ZnUV7CrCJU7_K8Xhz1e6h_K9v8LnFJAMgAzPx9Ll8RfBYYbgg-KgCLmoAE_SHvaWRZbDlXRMcSvdmeW_kknDWrlUKYI3PaHUW-TBSQP_t7hQElXdZA3OSmjOtM_FKnxY8cqiOnKq7lUgteLV8lmp24MbaCv6UYPZdG_Pdz7WPLgCGs9L9BQzPQ3JcWHg9HK3QeWSmLt6n_fw&pn=6&usid=ffbfbc5b0a3c307102b354ab78048232&tsid&paipv=0&eav=AfazXCTodAm_pRG8RPYlEvx6v0d5rMJ0FJ7hd5U6UvULtlO9QSzwHpJO_4L9NGA9-wQ'
+def fake(driver , link_get , link):
+    new_driver = driver
+    if(link_get%82==0):
+        logout(driver)
+        driver.quit()
+        print("đang thực hiện fake lần :" ,(link_get % 82) + 1)
+        sleep(random.uniform(2400.5, 3600.7) )
+        new_driver  = webdriver.Chrome("C:\\Users\\Admin\\Downloads\\chromdriv\\chromedriver-win64\\chromedriver.exe" , options=chrome_options)
+        login(new_driver )
+        sleep(5)
+        new_driver.get(link)
+    return new_driver
+
+see_more_href = 'https://mbasic.facebook.com/search/posts?q=romano&filters=eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D'
+login(driver)
+driver.get(see_more_href)
+sleep(2)
 while True:
 
     try:
@@ -751,16 +753,6 @@ while True:
         number_comments = []
         
         for i in range(0 ,len(div_elements)):
-            # k = 1
-            # if i%k==0: 
-            #         logout(driver)
-            #         driver.quit()
-            #         sleep(10)
-            #         driver = webdriver.Chrome("C:\\Users\\Admin\\Downloads\\chromdriv\\chromedriver.exe" , options=chrome_options)
-            #         login(driver)
-            #         sleep(random.uniform(60, 70.5) )
-
-            #         driver.get(see_more_href)
             try:
                 driver.execute_script("arguments[0].scrollIntoView();window.scrollBy(0, -200);", div_elements[i])
                 full_story_element = div_elements[i].find_element(By.XPATH, ".//a[text()='Full Story']")
@@ -776,15 +768,14 @@ while True:
 
                 sleep(random.uniform(2.25, 3) )
                 full_story_element.click()
+                link_get_story = link_get_story+ 1 
+                print('link_get_story = ' , link_get_story)
+                driver = fake(driver , link_get_story , full_story_link)
                 sleep(random.uniform(4.5, 9.5) )
                 print("Adding new link to list:", full_story_link)
                 
-            # full_story_links.append(full_story_link)
-            # number_comments.append(comment_number)
-                link_count_comment = get_data_from_link(driver , full_story_link , comment_number)
+                get_data_from_link(driver , full_story_link , comment_number)
                 sleep(random.uniform(3.5, 7.25) )
-            #     driver.back()
-            # sleep(random.uniform(2.25, 3) )
                 driver.get(see_more_href)
 
                 div_elements = driver.find_elements(By.XPATH, './/footer[@data-ft=\'{"tn":"*W"}\']')
@@ -792,14 +783,6 @@ while True:
             except Exception as e:
                 pass
                 
-            # for i in range(0 , link_count_comment):
-        # Ghi dữ liệu vào file CSV chỉ cho những link mới
-        # with open(csv_filename, mode="a" if os.path.exists(csv_filename) else "w", newline="", encoding="utf-8") as csv_file:
-        #     csv_writer = csv.writer(csv_file)
-        #     for link, comment_number in zip(full_story_links, number_comments):
-        #         csv_writer.writerow([link, comment_number])
-
-        # Trích xuất nội dung text từ tất cả thẻ p con bên trong thẻ div tìm được
         sleep(random.uniform(2.25, 5.5) )
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         see_more_link = driver.find_element(By.XPATH, "//div[contains(@id, 'see_more')]//a")
