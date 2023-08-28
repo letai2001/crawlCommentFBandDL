@@ -12,7 +12,7 @@ class Post:
         self.avatar = ""
         self.created_time = ""
         self.content = ""
-        self.image_url = ""
+        self.image_url = []
         self.like = 0
         self.comment = 0
         self.haha = 0

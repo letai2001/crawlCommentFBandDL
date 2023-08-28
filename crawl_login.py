@@ -587,23 +587,24 @@ def get_data_from_comment(driver , comment_element):
         comment_post.created_time = time_process
         
         try:
-        
-            xpath_img = '//a[contains(@href, \'photo\')]//img'    
-            img_elements = comment_element.find_element(By.XPATH , xpath_img)
-            img_link = img_elements.get_attribute('src')
+            xpath_img = f"//div[@id='{comment_id}']//a[contains(@href, 'photo')]//img"
+
+                
+            img_element = driver.find_element(By.XPATH , xpath_img)
+            img_link = img_element.get_attribute('src')
             comment_post.image_url = img_link
         except Exception as e:
             comment_post.image_url = ''
         
-        try:
-        
-            video_element = comment_element.find_element(By.XPATH , "//a[starts-with(@href, '/video_redirect/')]")
+        try:  
+            
+            video_element = driver.find_element(By.XPATH , f"//div[@id='{comment_id}']//a[starts-with(@href, '/video_redirect/')]")
             video_href  = video_element.get_attribute('href')
             comment_post.video = video_href
         except Exception as e:
             comment_post.video = ''
-        try:   
-            link_element = comment_element.find_element(By.XPATH, '//a[contains(@href, "/ufi/reaction/profile/")]')
+        try: 
+            link_element = comment_element.find_element(By.XPATH  , f"//span[contains(@id, 'like') and contains(@id, '_{comment_id}')]//a[contains(@href, '/ufi/reaction/profile/')]")  
             link_href = link_element.get_attribute('href')
             
             sleep(random.uniform(2.25, 5.5) )
@@ -627,7 +628,7 @@ def get_data_from_comment(driver , comment_element):
             comment_post.haha = reaction_Haha
             comment_post.angry = reaction_Angry
             comment_post.sad = reaction_Huhu
-
+            driver.back()
         except Exception as e:
             comment_post.like = 0
             comment_post.love = 0
@@ -637,28 +638,37 @@ def get_data_from_comment(driver , comment_element):
             comment_post.sad = 0
         return comment_post
 
-def extract_info_from_divs(div_comment_elements):
+def extract_info_from_divs(driver):
     comments = {}
-    comment_post = Post()
-    for div_element in div_comment_elements:
+    div_comment_elements = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
+    for i in range(0 ,len(div_comment_elements)):
         try:
-            comment_post = get_data_from_comment(div_element)
-            comments[comment_post.id] = comment_post
-            try:
-                xpath_rep = "//a[starts-with(@href, '/comment/replies/')]"
-                rep_element = div_element.find_element(By.XPATH , xpath_rep)
-                rep_href = rep_element.get_attribute("href")
-                div_comment_reps = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
-                for div_comment_rep in div_comment_reps[1:]:
-                    comment_post_rep = get_data_from_comment(div_comment_rep)
-                    comments[comment_post_rep.id] = comment_post_rep
-            except Exception as e:
-                pass
+            comment_post = Post()
 
+            comment_post = get_data_from_comment(driver , div_comment_elements[i])
+            comments[comment_post.id] = comment_post
+            div_comment_elements = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
+            try:
+                xpath_rep =f"//div[contains(@id, 'comment_replies_more') and contains(@id, '_{comment_post.id}')]//a[starts-with(@href, '/comment/replies/')]"
+                # xpath_rep = "//a[starts-with(@href, '/comment/replies/')]"
+                rep_element =  div_comment_elements[i].find_element(By.XPATH , xpath_rep)
+                rep_href = rep_element.get_attribute("href")
+                driver.get(rep_href)
+                div_comment_reps = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
+                for i in range(1 ,len(div_comment_reps)):
+                    comment_post_rep = get_data_from_comment(driver , div_comment_reps[i])
+                    comments[comment_post_rep.id] = comment_post_rep
+                    div_comment_reps = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
+                driver.back()
+                div_comment_elements = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
+            except Exception as e:
+                print(e)
+                pass
+           
         except Exception as e:
+            print(e)
             pass
     return comments
-
 def crawl_comments(driver ):
     global link_get_story
     comments = {}    
@@ -679,10 +689,10 @@ def crawl_comments(driver ):
             #     scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
             #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             #     sleep(scroll_delay)
-            div_comment_elements = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
-            comment_per_page = extract_info_from_divs(div_comment_elements)
+            comment_per_page = extract_info_from_divs(driver)
             comments.update(comment_per_page)
-            print(len(comments))  
+            print(len(comments)) 
+            print(comments) 
             
             if len(div_more_elements) - len(div_prev_elements) < 0:
                 div_prev_elements = driver.find_elements(By.XPATH, "//div[contains(@id, 'see_prev')]")
