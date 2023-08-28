@@ -31,11 +31,15 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 latestchromedriver = ChromeDriverManager().install()
 
+from post import Post
 
+new_post = Post()
+comment_post = Post()
 chrome_options = Options()
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument("--disable-notification")
-chrome_options.add_argument("--incognito")
+# chrome_options.add_argument("--incognito")
+# chrome_options.add_experimental_option("excludeSwitches", ['enable-automation']);
 
 # user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
 # chrome_options.add_argument(f'user-agent={user_agent}')
@@ -43,7 +47,7 @@ chrome_options.add_argument('--disable-blink-features=AutomationControlled')
 # chrome_options.add_argument('--ignore-certificate-errors')
 # chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
 # chrome_options.add_experimental_option('useAutomationExtension', False)
-# chrome_options.add_experimental_option('debuggerAddress', 'localhost:9222')
+chrome_options.add_experimental_option('debuggerAddress', 'localhost:9222')
 # options.add_argument('--disable-blink-features=AutomationControlled')
 # options.add_argument("--start-maximized")
 # options.add_argument('--disable-infobars')
@@ -56,6 +60,9 @@ chrome_options.add_argument('--disable-blink-features=AutomationControlled')
 driver = webdriver.Chrome("C:\\Users\\Admin\\Downloads\\chromdriv\\chromedriver-win64\\chromedriver.exe" , options=chrome_options)
 link_get_story = 0
 # driver = uc.Chrome(driver_executable_path=latestchromedriver , options = chrome_options)
+
+
+
 def logout(driver):
     driver.get('https://mbasic.facebook.com/home.php?')
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -80,7 +87,7 @@ def login(driver):
     driver.get('https://www.facebook.com//')
 
     txtUser = driver.find_element(By.ID , "email")
-    txtUser.send_keys('qms42009@zbock.com')
+    txtUser.send_keys('lee_tai12@yahoo.com.vn')
     sleep(2)    
     txtPassword = driver.find_element(By.ID , "pass")
     txtPassword.send_keys('thanhnam4321')
@@ -272,7 +279,9 @@ def find_all_images(driver , link):
 def find_link_video(driver):
     video_link = "no video"
     try:
-        element = driver.find_element(By.XPATH , "//a[starts-with(@href, '/video_redirect/')]")
+        outer_div = driver.find_elements(By.XPATH, '//div[@data-ft=\'{"tn":"H"}\']')
+
+        element = outer_div[0].find_element(By.XPATH , "//a[starts-with(@href, '/video_redirect/')]")
         video_link = element.get_attribute("href")
     except Exception as e:
         pass
@@ -556,51 +565,123 @@ def getCreatedTime(text):
         return created_time, distance_time
     return time_now, 0
 
+
+
+
+def get_data_from_comment(driver , comment_element):
+        comment_post = Post()
+        comment_id = comment_element.get_attribute("id")
+        comment_post.id = comment_id
+        
+        first_nested_div = comment_element.find_element(By.XPATH, ".//div[1]")
+        h3_element = first_nested_div.find_element(By.TAG_NAME, "h3")
+        a_element = h3_element.find_element(By.TAG_NAME, "a")
+        comment_post.author_link = a_element.get_attribute("href")
+        comment_post.author = a_element.text
+        
+        adjacent_div = h3_element.find_element(By.XPATH, "following-sibling::div[1]")
+        comment_post.content = adjacent_div.text
+        time_element = comment_element.find_element(By.TAG_NAME, "abbr")
+        time_text = time_element.text
+        time_process  , _= getCreatedTime(time_text)
+        comment_post.created_time = time_process
+        
+        try:
+        
+            xpath_img = '//a[contains(@href, \'photo\')]//img'    
+            img_elements = comment_element.find_element(By.XPATH , xpath_img)
+            img_link = img_elements.get_attribute('src')
+            comment_post.image_url = img_link
+        except Exception as e:
+            comment_post.image_url = ''
+        
+        try:
+        
+            video_element = comment_element.find_element(By.XPATH , "//a[starts-with(@href, '/video_redirect/')]")
+            video_href  = video_element.get_attribute('href')
+            comment_post.video = video_href
+        except Exception as e:
+            comment_post.video = ''
+        try:   
+            link_element = comment_element.find_element(By.XPATH, '//a[contains(@href, "/ufi/reaction/profile/")]')
+            link_href = link_element.get_attribute('href')
+            
+            sleep(random.uniform(2.25, 5.5) )
+    # driver.get(link_href)
+            driver.get(link_href)
+            # link_element.click()
+            
+            sleep(random.uniform(2.25, 5.5) )
+            
+            reaction_Like = count_react(driver , "Like")
+            reaction_Love = count_react(driver , "Love")
+            reaction_Care = count_react(driver , "Care")
+            reaction_Wow = count_react(driver , "Wow")
+            reaction_Haha = count_react(driver , "Haha")
+            reaction_Angry = count_react(driver , "Angry")
+            reaction_Huhu = count_react(driver , "Sad")
+            reaction_All = reaction_Like+reaction_Love+reaction_Care+reaction_Wow+reaction_Haha+reaction_Angry+reaction_Huhu
+            comment_post.like = reaction_Like
+            comment_post.love = reaction_Love
+            comment_post.wow = reaction_Wow
+            comment_post.haha = reaction_Haha
+            comment_post.angry = reaction_Angry
+            comment_post.sad = reaction_Huhu
+
+        except Exception as e:
+            comment_post.like = 0
+            comment_post.love = 0
+            comment_post.wow = 0
+            comment_post.haha = 0
+            comment_post.angry = 0
+            comment_post.sad = 0
+        return comment_post
+
 def extract_info_from_divs(div_comment_elements):
-    auth_links = []
-    auth_names = []
-    div_texts = []
+    comments = {}
+    comment_post = Post()
     for div_element in div_comment_elements:
         try:
-            first_nested_div = div_element.find_element(By.XPATH, ".//div[1]")
-            h3_element = first_nested_div.find_element(By.TAG_NAME, "h3")
-            a_element = h3_element.find_element(By.TAG_NAME, "a")
-            auth_links.append(a_element.get_attribute("href"))
-            auth_names.append(a_element.text)
-            adjacent_div = h3_element.find_element(By.XPATH, "following-sibling::div[1]")
-            div_texts.append(adjacent_div.text)
+            comment_post = get_data_from_comment(div_element)
+            comments[comment_post.id] = comment_post
+            try:
+                xpath_rep = "//a[starts-with(@href, '/comment/replies/')]"
+                rep_element = div_element.find_element(By.XPATH , xpath_rep)
+                rep_href = rep_element.get_attribute("href")
+                div_comment_reps = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
+                for div_comment_rep in div_comment_reps[1:]:
+                    comment_post_rep = get_data_from_comment(div_comment_rep)
+                    comments[comment_post_rep.id] = comment_post_rep
+            except Exception as e:
+                pass
+
         except Exception as e:
             pass
-    return auth_links, auth_names, div_texts
+    return comments
 
 def crawl_comments(driver ):
     global link_get_story
-    auth_links_comments = []
-    auth_names_comments = []
-    comments = []
-    
+    comments = {}    
     div_prev_elements = driver.find_elements(By.XPATH, "//div[contains(@id, 'see_prev')]")
     div_more_elements = driver.find_elements(By.XPATH, "//div[contains(@id, 'see_next')]")
     link_count = 1
     while len(comments)<=100:
         try:
-            for i in range(3):
-                scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                sleep(scroll_delay)
+            # for i in range(3):
+            #     scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
+            #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            #     sleep(scroll_delay)
 
-                scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
-                driver.execute_script("window.scrollTo(0, 0);")
-                sleep(scroll_delay)
+            #     scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
+            #     driver.execute_script("window.scrollTo(0, 0);")
+            #     sleep(scroll_delay)
 
-                scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                sleep(scroll_delay)
+            #     scroll_delay = random.uniform(1.5, 3.5)  # Tạo thời gian ngẫu nhiên trong khoảng từ 1.5 đến 3.5 giây
+            #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            #     sleep(scroll_delay)
             div_comment_elements = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
-            auth_links, auth_names, div_texts = extract_info_from_divs(div_comment_elements)
-            auth_links_comments.extend(auth_links)
-            auth_names_comments.extend(auth_names)
-            comments.extend(div_texts)
+            comment_per_page = extract_info_from_divs(div_comment_elements)
+            comments.update(comment_per_page)
             print(len(comments))  
             
             if len(div_more_elements) - len(div_prev_elements) < 0:
@@ -618,7 +699,7 @@ def crawl_comments(driver ):
             a_element.click()
             link_get_story +=1  
             print('link_get_story = ' , link_get_story)
-            driver = fake(driver , link_get_story ,link)
+            # driver = fake(driver , link_get_story ,link)
             
 
             # fake(driver , link_count , link)
@@ -626,7 +707,7 @@ def crawl_comments(driver ):
             print(e)
             break
 
-    return auth_links_comments, auth_names_comments, comments 
+    return  comments 
 
 # driver.get('https://www.facebook.com//')
 
@@ -658,143 +739,148 @@ def extract_id(link):
     except Exception as e:
         print(f"Error: {e}")
     return id_value
-def get_data_from_link(driver , link , number_comment):
-        link_count = 0
-        unique_key = link
-        if unique_key not in data:
-            sleep(random.uniform(2.25, 5.5) )
-            link_count +=1
-            print(link_count)
-            # fake(driver , link_count , link)
+# def get_data_from_link(driver , link , number_comment):
+#         link_count = 0
+#         unique_key = link
+#         if unique_key not in data:
+#             sleep(random.uniform(2.25, 5.5) )
+#             link_count +=1
+#             print(link_count)
+#             # fake(driver , link_count , link)
 
-            sleep(random.uniform(2.25, 5.5) )
-            auth_link , auth_text = find_author(driver)
-            content = find_content(driver)+find_content_background(driver)
-            reaction_All ,  reaction_Like , reaction_Love, reaction_Care , reaction_Wow , reaction_Haha , reaction_Angry , reaction_Huhu = count_react_item(driver)
-            link_video = find_link_video(driver)
-            link_author_share , text_share = find_link_share(driver)
-            content_share = find_content_share(driver)
-            time_text = find_time(driver)
-            time_process  , _= getCreatedTime(time_text)
-            # In kết quả
-            image_links = find_all_images(driver , link)
-            auth_links_comments ,auth_names_comments ,  comments  = crawl_comments(driver)
-            data_line = {"Link_post": link, 
-                            "author":{ 'author_link': auth_link ,  
-                                    'auth_name': auth_text
-                                } 
-                        ,"time":time_process , "content": content , 
-                        "share_post":{
-                            'link_author_share: ' : link_author_share ,
-                            'author_share: ' : text_share ,
-                            'content_share: ' : content_share,
+#             sleep(random.uniform(2.25, 5.5) )
+#             auth_link , auth_text = find_author(driver)
+#             content = find_content(driver)+find_content_background(driver)
+#             reaction_All ,  reaction_Like , reaction_Love, reaction_Care , reaction_Wow , reaction_Haha , reaction_Angry , reaction_Huhu = count_react_item(driver)
+#             link_video = find_link_video(driver)
+#             link_author_share , text_share = find_link_share(driver)
+#             content_share = find_content_share(driver)
+#             time_text = find_time(driver)
+#             time_process  , _= getCreatedTime(time_text)
+#             # In kết quả
+#             image_links = find_all_images(driver , link)
+#             auth_links_comments ,auth_names_comments ,  comments  = crawl_comments(driver)
+#             data_line = {"Link_post": link, 
+#                             "author":{ 'author_link': auth_link ,  
+#                                     'auth_name': auth_text
+#                                 } 
+#                         ,"time":time_process , "content": content , 
+#                         "share_post":{
+#                             'link_author_share: ' : link_author_share ,
+#                             'author_share: ' : text_share ,
+#                             'content_share: ' : content_share,
                             
-                        } ,
-                        "video_only": link_video , 
-                        "image_post_list":   image_links ,
+#                         } ,
+#                         "video_only": link_video , 
+#                         "image_post_list":   image_links ,
                     
-                        "number_reaction": {"Like": reaction_Like, "Love": reaction_Love , 
-                                    "Care": reaction_Care , "Wow": reaction_Wow , 
-                                    "Haha": reaction_Haha , "Angry": reaction_Angry,
-                                    "Huhu": reaction_Huhu,
-                                    "All_react": reaction_All , 
-                            },
-                        "comment":{
-                            "number_of_comments":number_comment , 
-                            "account_links_comment": auth_links_comments,
-                            "name_comment_list" : auth_names_comments ,
-                            "comment_list": comments  , 
-                        } }
+#                         "number_reaction": {"Like": reaction_Like, "Love": reaction_Love , 
+#                                     "Care": reaction_Care , "Wow": reaction_Wow , 
+#                                     "Haha": reaction_Haha , "Angry": reaction_Angry,
+#                                     "Huhu": reaction_Huhu,
+#                                     "All_react": reaction_All , 
+#                             },
+#                         "comment":{
+#                             "number_of_comments":number_comment , 
+#                             "account_links_comment": auth_links_comments,
+#                             "name_comment_list" : auth_names_comments ,
+#                             "comment_list": comments  , 
+#                         } }
 
-            # crawl commen
+#             # crawl commen
         
-            data[unique_key] = data_line
-            print(f"Đã thêm mới phần tử với key: {unique_key}")
-            print(json.dumps(data_line, ensure_ascii=False, indent=4))
-        else:
-            print(f"Phần tử với key: {unique_key} đã tồn tại!")
+#             data[unique_key] = data_line
+#             print(f"Đã thêm mới phần tử với key: {unique_key}")
+#             print(json.dumps(data_line, ensure_ascii=False, indent=4))
+#         else:
+#             print(f"Phần tử với key: {unique_key} đã tồn tại!")
 
             
-        with open('data_new.json', 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-            f.write('\n')
+#         with open('data_new.json', 'w', encoding='utf-8') as f:
+#             json.dump(data, f, ensure_ascii=False, indent=4)
+#             f.write('\n')
 
-if os.path.exists('data_new.json'):
-    if os.path.getsize('data_new.json') == 0:
-        data = {}
-    else:
-        with open('data_new.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)
-else:
-    data = {}
-def fake(driver , link_get , link):
-    new_driver = driver
-    if(link_get%82==0):
-        logout(driver)
-        driver.quit()
-        print("đang thực hiện fake lần :" ,(link_get % 82) + 1)
-        sleep(random.uniform(2400.5, 3600.7) )
-        new_driver  = webdriver.Chrome("C:\\Users\\Admin\\Downloads\\chromdriv\\chromedriver-win64\\chromedriver.exe" , options=chrome_options)
-        login(new_driver )
-        sleep(5)
-        new_driver.get(link)
-    return new_driver
+# if os.path.exists('data_new.json'):
+#     if os.path.getsize('data_new.json') == 0:
+#         data = {}
+#     else:
+#         with open('data_new.json', 'r', encoding='utf-8') as f:
+#             data = json.load(f)
+# else:
+#     data = {}
+# def fake(driver , link_get , link):
+#     new_driver = driver
+#     if(link_get%82==0):
+#         logout(driver)
+#         driver.quit()
+#         print("đang thực hiện fake lần :" ,(link_get % 82) + 1)
+#         sleep(random.uniform(5400.5, 7200.7) )
+#         new_driver  = webdriver.Chrome("C:\\Users\\Admin\\Downloads\\chromdriv\\chromedriver-win64\\chromedriver.exe" , options=chrome_options)
+#         login(new_driver )
+#         sleep(5)
+#         new_driver.get(link)
+#     return new_driver
 
-see_more_href = 'https://mbasic.facebook.com/search/posts?q=romano&filters=eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D'
-login(driver)
-driver.get(see_more_href)
-sleep(2)
-while True:
+# see_more_href = 'https://mbasic.facebook.com/groups/1212236082236816?bacr=1692714416%3A6360204930773213%3A6360204930773213%2C0%2C4%3A7%3AKw%3D%3D&multi_permalinks&eav=Afbyu4hHkDQxvvhYL4t7oDwNyDCf3uUtITndD4wAZ310hpeFOdiESdlNrbQDNINfXYM&paipv=0&refid=18'
+# login(driver)
+# driver.get(see_more_href)
+# sleep(2)
+# while True:
 
-    try:
-        div_elements = driver.find_elements(By.XPATH, './/footer[@data-ft=\'{"tn":"*W"}\']')
+#     try:
+#         div_elements = driver.find_elements(By.XPATH, './/footer[@data-ft=\'{"tn":"*W"}\']')
 
-        full_story_links = []
-        number_comments = []
+#         full_story_links = []
+#         number_comments = []
         
-        for i in range(0 ,len(div_elements)):
-            try:
-                driver.execute_script("arguments[0].scrollIntoView();window.scrollBy(0, -200);", div_elements[i])
-                full_story_element = div_elements[i].find_element(By.XPATH, ".//a[text()='Full Story']")
-                driver.execute_script("arguments[0].scrollIntoView();window.scrollBy(0, -200);", full_story_element)
-                full_story_link = full_story_element.get_attribute('href')
-                try:
-                    comment_element = div_elements[i].find_element(By.XPATH, ".//a[contains(text(),'Comment')]")
-                    comment_text = comment_element.get_attribute('text')
-                    comment_number = re.search(r'(\d+(?:,\d+)?)\s+Comment', comment_text).group(1)
+#         for i in range(0 ,len(div_elements)+1):
+#             try:
+#                 driver.execute_script("arguments[0].scrollIntoView();window.scrollBy(0, -200);", div_elements[i+1])
+#                 full_story_element = div_elements[i+1].find_element(By.XPATH, ".//a[text()='Full Story']")
+#                 driver.execute_script("arguments[0].scrollIntoView();window.scrollBy(0, -200);", full_story_element)
+#                 full_story_link = full_story_element.get_attribute('href')
+#                 try:
+#                     comment_element = div_elements[i+1].find_element(By.XPATH, ".//a[contains(text(),'Comment')]")
+#                     comment_text = comment_element.get_attribute('text')
+#                     comment_number = re.search(r'(\d+(?:,\d+)?)\s+Comment', comment_text).group(1)
 
-                except Exception as e:
-                    comment_number = 0
+#                 except Exception as e:
+#                     comment_number = 0
 
-                sleep(random.uniform(2.25, 3) )
-                full_story_element.click()
-                link_get_story = link_get_story+ 1 
-                print('link_get_story = ' , link_get_story)
-                driver = fake(driver , link_get_story , full_story_link)
-                sleep(random.uniform(4.5, 9.5) )
-                print("Adding new link to list:", full_story_link)
+#                 sleep(random.uniform(2.25, 3) )
+#                 full_story_element.click()
+#                 link_get_story = link_get_story+ 1 
+#                 print('link_get_story = ' , link_get_story)
+#                 # driver = fake(driver , link_get_story , full_story_link)
+#                 sleep(random.uniform(3.5, 5.5) )
+#                 print("Adding new link to list:", full_story_link)
                 
-                get_data_from_link(driver , full_story_link , comment_number)
-                sleep(random.uniform(3.5, 7.25) )
-                driver.get(see_more_href)
+#                 get_data_from_link(driver , full_story_link , comment_number)
+#                 sleep(random.uniform(3,4.5) )
+#                 driver.get(see_more_href)
 
-                div_elements = driver.find_elements(By.XPATH, './/footer[@data-ft=\'{"tn":"*W"}\']')
+#                 div_elements = driver.find_elements(By.XPATH, './/footer[@data-ft=\'{"tn":"*W"}\']')
 
-            except Exception as e:
-                pass
+#             except Exception as e:
+#                 pass
                 
-        sleep(random.uniform(2.25, 5.5) )
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        see_more_link = driver.find_element(By.XPATH, "//div[contains(@id, 'see_more')]//a")
-        see_more_href = see_more_link.get_attribute("href")
-        sleep(random.uniform(2.25, 5.5) )
-        driver.get(see_more_href)
-        sleep(random.uniform(2.25, 5.5) )
+#         sleep(random.uniform(2.25, 5.5) )
+#         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+#         see_more_link = driver.find_element(By.XPATH, '//a[span[text()="See more posts"]]')
+#         see_more_href = see_more_link.get_attribute("href")
 
-        # Tiếp tục xử lý và ghi dữ liệu vào file CSV nếu cần
+#         sleep(random.uniform(2.25, 5.5) )
+#         driver.get(see_more_href)
+#         sleep(random.uniform(2.25, 5.5) )
 
-    except Exception as e:
-        print(e)
-        break
+#         # Tiếp tục xử lý và ghi dữ liệu vào file CSV nếu cần
+
+#     except Exception as e:
+#         print(e)
+#         break
 # *Command to open Chrome Browser as debugger Browser*
 # chrome.exe --remote-debugging-port=9222 --user-data-dir=C:\chromedriver_win32\data 
+# full_story_link = 'https://mbasic.facebook.com/groups/mixigaming/permalink/4252769561516771/?refid=18&_ft_=encrypted_tracking_data.0AY-UV7zEpipBYNPw8MvFKp4rTHnZwNTatx5J0QUDVj28mM-pch0fmP2bit4Ak9uDjihkI8K3uEty0mbpyJGD5VxShwzXOn16wckOc01r4fAJNr5D1YXsKiU_tmmA9SLv_lZcLKtThp3v-sU4AmF6zZn_Tl4-ZL1Y2bjVOoXh_0Kh02wkpI5f0Y62md90X45FwPF0jRSWaRN2Q_Uymtrj2dq6Pf93cwNvLDUpjmEGoFiXRRIjCPYgq6kf1ACLdEUCNyY0Tkox_yUsyPXLCbBJ96C_qjqerANXToSCFJdCHju7j30HfZudKeYShaBQsMsrzyrtYZJSVLecKlqlpTWIvlty38Mt6mxB4rXXIZeer85uYXIghs1SoaB0kFaMtL5MoxoGXlS7Boez7M-RNDmRKx7bvuvRV8Qvn0AwQr1hrUG4SJScuFbgkFLn1jeNVi-8kxD_f-AybtQiJtF0etubkFw2qnhrOZN_z6w9kXPHy3cS1i8UVqhi1j5zPH-_Jl9lR17L5KS7OEsU_C7C6O3tIRQDY5tq4EYE7KiIT1LOEP2VqipQu55kM0J3b3Ntb2hH-f03WB1sL4i2Yuc61MdwdjXMAU9cqcDez9KjAFKEO3B2h_-Entlbk8awzwV3PT2RqmKqAHntwtFhMsDa0Xwn7LtgRoQjVYd2jReqI86A4FKvXS8uEX-WBsEeYFtk2UrcgDH7K0FdkbtP60i9jAnSnn2GPaOlvXTImOyX_Lxh2BVyoZmn6J7EU5dARs4dG_11Q7EaH_9U7YnZXxLrF-CpFRFYYfJ5uLVyqqv-O2s1hLhXv-kOnsZ75iWdonEVBUz9NTigK70AXUdDQ5yw8wYfFfWfE7ajELTcTIVJbFu4bgs79LGM7G-1OSK_ayDsfw1wFPLtOBat83mpjy5pGBzG5j7yh513h3J1m82vBkG0u0fxDBepptqlAd5RDk7wTKjhkbbxTSk0vFK7oBzpSXzv_topzUd-bq02YnJJsRpVnQfxwQPqb3LJa7gPIVYw2jsLU5j1bdpOgCspUVh2IzUEdwNqy7NgdWGaKusIfEpEP4oiWtZtNCKqu8BCoy9-QE2WMFHCCtR-nQ1FunJ-2ocQl0XFeJI0NPjYu6uPilDLcEd2PerWtejXxZBdXSK1rFBUfd_JAFghI18vdA&__tn__=%2AW-R&paipv=0&eav=AfZTzgyyZMk4FLKBeTeG-ATBuXyXyJ-TRhTSh5Yl8dc4ECPFGPBqw63IfaQ_F-vV_1w#footer_action_list'
+# get_data_from_link(driver , full_story_link , 15)
+comments  = crawl_comments(driver)
+print(comments)
