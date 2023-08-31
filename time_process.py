@@ -269,5 +269,3 @@ def getCreatedTime(text):
         return created_time, distance_time
     return time_now, 0
 
-text_time  , days = getCreatedTime('55 mins')
-print(text_time)

@@ -28,7 +28,7 @@ class Post:
         self.duration = 0
         self.view = 0
         self.description = ""
-        self.video = ""
+        self.video = []
         self.source_id = ""
         
     #Hàm xác định xem post được crawl đủ hay chưa
@@ -41,3 +41,44 @@ class Post:
         for attr_name, attr_value in self.__dict__.items():
             string =  f"{attr_name}={attr_value}\n" + string
         return string
+    def to_dict_comment(self) -> dict:
+        return {"id": self.id,
+                "type": self.type,
+                "time_crawl": self.time_crawl , 
+                            "author":{ 'author_link': self.author_link ,  
+                                    'auth_name': self.author
+                                } 
+                        ,"time":self.created_time ,
+                        "content": self.content , 
+                        "video_only": self.video , 
+                        "image_post_list":   self.image_url ,
+                    
+                        "number_reaction": {"Like": self.like, "Love": self.love , 
+                                     "Wow": self.wow , 
+                                    "Haha": self.haha , "Angry": self.angry,
+                                    "Huhu": self.sad,
+                                   
+                            },
+                        "source_id": self.source_id , 
+                         }
+    def to_dict_post(self) -> dict:
+        return      {"id": self.id, 
+                     "self.type": self.type , 
+                      "time_crawl": self.time_crawl , 
+                     "self.created_time": self.created_time , 
+                     
+                            "author":{ 'author_link': self.author_link ,  
+                                    'auth_name': self.author
+                                } ,
+                            "number_comment": self.comment 
+
+                        ,"time":self.created_time , "content": self.content , 
+                        "video_only": self.video , 
+                        "image_post_list":   self.image_url ,
+                    
+                        "number_reaction": {"Like": self.like, "Love": self.love , 
+                                     "Wow": self.wow , 
+                                    "Haha": self.haha , "Angry": self.angry,
+                                    "Huhu": self.sad, 
+                        }
+                        }

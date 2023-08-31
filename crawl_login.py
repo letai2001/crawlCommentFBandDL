@@ -592,7 +592,7 @@ def get_data_from_comment(driver , comment_element):
                 
             img_element = driver.find_element(By.XPATH , xpath_img)
             img_link = img_element.get_attribute('src')
-            comment_post.image_url = img_link
+            comment_post.image_url.append(img_link)
         except Exception as e:
             comment_post.image_url = ''
         
@@ -600,7 +600,7 @@ def get_data_from_comment(driver , comment_element):
             
             video_element = driver.find_element(By.XPATH , f"//div[@id='{comment_id}']//a[starts-with(@href, '/video_redirect/')]")
             video_href  = video_element.get_attribute('href')
-            comment_post.video = video_href
+            comment_post.video.append(video_href)
         except Exception as e:
             comment_post.video = ''
         try: 
@@ -646,18 +646,21 @@ def extract_info_from_divs(driver):
             comment_post = Post()
 
             comment_post = get_data_from_comment(driver , div_comment_elements[i])
-            comments[comment_post.id] = comment_post
+            comments[comment_post.id] = comment_post.to_dict_comment()
+            
             div_comment_elements = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
             try:
                 xpath_rep =f"//div[contains(@id, 'comment_replies_more') and contains(@id, '_{comment_post.id}')]//a[starts-with(@href, '/comment/replies/')]"
                 # xpath_rep = "//a[starts-with(@href, '/comment/replies/')]"
                 rep_element =  div_comment_elements[i].find_element(By.XPATH , xpath_rep)
                 rep_href = rep_element.get_attribute("href")
+                sleep(2)
                 driver.get(rep_href)
+                sleep(2)
                 div_comment_reps = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
                 for i in range(1 ,len(div_comment_reps)):
                     comment_post_rep = get_data_from_comment(driver , div_comment_reps[i])
-                    comments[comment_post_rep.id] = comment_post_rep
+                    comments[comment_post_rep.id] = comment_post_rep.to_dict_comment()
                     div_comment_reps = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
                 driver.back()
                 div_comment_elements = driver.find_elements(By.XPATH, "//div[string-length(@id) >= 15 and translate(@id, '1234567890', '') = '']")
@@ -691,6 +694,9 @@ def crawl_comments(driver ):
             #     sleep(scroll_delay)
             comment_per_page = extract_info_from_divs(driver)
             comments.update(comment_per_page)
+            with open('data_comment.json', 'w', encoding='utf-8') as f:
+                json.dump(comments, f, ensure_ascii=False, indent=4)
+                f.write('\n')
             print(len(comments)) 
             print(comments) 
             
