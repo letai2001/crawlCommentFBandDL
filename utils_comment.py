@@ -27,7 +27,6 @@ import calendar
 import os
 import csv
 import undetected_chromedriver as uc
-from webdriver_manager.chrome import ChromeDriverManager
 import time_process as tp
 
 class Detail_Comment_Crawler :
@@ -123,72 +122,4 @@ class Detail_Comment_Crawler :
            pass
 
         return reaction_Like , reaction_Love , reaction_Wow , reaction_Haha , reaction_Angry  , reaction_Huhu
-    def get_data_from_comment(driver , comment_element):
-        comment_post = Post()
-        comment_id = comment_element.get_attribute("id")
-        comment_post.id = comment_id
-        
-        first_nested_div = comment_element.find_element(By.XPATH, ".//div[1]")
-        h3_element = first_nested_div.find_element(By.TAG_NAME, "h3")
-        a_element = h3_element.find_element(By.TAG_NAME, "a")
-        comment_post.author_link = a_element.get_attribute("href")
-        comment_post.author = a_element.text
-        
-        adjacent_div = h3_element.find_element(By.XPATH, "following-sibling::div[1]")
-        comment_post.content = adjacent_div.text
-        time_element = comment_element.find_element(By.TAG_NAME, "abbr")
-        time_text = time_element.text
-        time_process  , _= time_process.getCreatedTime(time_text)
-        comment_post.created_time = time_process
-        
-        try:
-            xpath_img = f"//div[@id='{comment_id}']//a[contains(@href, 'photo')]//img"
-
-                
-            img_element = driver.find_element(By.XPATH , xpath_img)
-            img_link = img_element.get_attribute('src')
-            comment_post.image_url.append(img_link)
-        except Exception as e:
-            comment_post.image_url = ''
-        
-        try:  
-            
-            video_element = driver.find_element(By.XPATH , f"//div[@id='{comment_id}']//a[starts-with(@href, '/video_redirect/')]")
-            video_href  = video_element.get_attribute('href')
-            comment_post.video.append(video_href)
-        except Exception as e:
-            comment_post.video = ''
-        try: 
-            link_element = comment_element.find_element(By.XPATH  , f"//span[contains(@id, 'like') and contains(@id, '_{comment_id}')]//a[contains(@href, '/ufi/reaction/profile/')]")  
-            link_href = link_element.get_attribute('href')
-            
-            sleep(random.uniform(2.25, 5.5) )
-    # driver.get(link_href)
-            driver.get(link_href)
-            # link_element.click()
-            
-            sleep(random.uniform(2.25, 5.5) )
-            
-            reaction_Like = count_react(driver , "Like")
-            reaction_Love = count_react(driver , "Love")
-            reaction_Care = count_react(driver , "Care")
-            reaction_Wow = count_react(driver , "Wow")
-            reaction_Haha = count_react(driver , "Haha")
-            reaction_Angry = count_react(driver , "Angry")
-            reaction_Huhu = count_react(driver , "Sad")
-            reaction_All = reaction_Like+reaction_Love+reaction_Care+reaction_Wow+reaction_Haha+reaction_Angry+reaction_Huhu
-            comment_post.like = reaction_Like
-            comment_post.love = reaction_Love
-            comment_post.wow = reaction_Wow
-            comment_post.haha = reaction_Haha
-            comment_post.angry = reaction_Angry
-            comment_post.sad = reaction_Huhu
-            driver.back()
-        except Exception as e:
-            comment_post.like = 0
-            comment_post.love = 0
-            comment_post.wow = 0
-            comment_post.haha = 0
-            comment_post.angry = 0
-            comment_post.sad = 0
-        return comment_post
+    

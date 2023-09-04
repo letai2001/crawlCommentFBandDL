@@ -900,3 +900,4 @@ def extract_id(link):
 # get_data_from_link(driver , full_story_link , 15)
 comments  = crawl_comments(driver)
 print(comments)
+

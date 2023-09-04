@@ -27,7 +27,6 @@ import calendar
 import os
 import csv
 import undetected_chromedriver as uc
-from webdriver_manager.chrome import ChromeDriverManager
 import time_process as tp
 
 
@@ -139,13 +138,13 @@ class Detail_Post_Crawler:
             sleep(random.uniform(2.25, 5.5) )
             
             # Duyệt qua từng thẻ div và tìm các thẻ con có arial-label chứa các reaction như "Like", "Haha", ...
-            reaction_Like = self.count_react(self.driver , "Like")
-            reaction_Love = self.count_react(self.driver , "Love")
-            reaction_Care = self.count_react(self.driver , "Care")
-            reaction_Wow = self.count_react(self.driver , "Wow")
-            reaction_Haha = self.count_react(self.driver , "Haha")
-            reaction_Angry = self.count_react(self.driver , "Angry")
-            reaction_Huhu = self.count_react(self.driver , "Sad")
+            reaction_Like = self.count_react("Like")
+            reaction_Love = self.count_react("Love")
+            reaction_Care = self.count_react("Care")
+            reaction_Wow = self.count_react("Wow")
+            reaction_Haha = self.count_react("Haha")
+            reaction_Angry = self.count_react("Angry")
+            reaction_Huhu = self.count_react("Sad")
             reaction_All = reaction_Like+reaction_Love+reaction_Care+reaction_Wow+reaction_Haha+reaction_Angry+reaction_Huhu
             sleep(random.uniform(2.25, 5.5) )
             self.driver.back()

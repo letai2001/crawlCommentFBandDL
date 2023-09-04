@@ -1,0 +1,60 @@
+{
+    "null": {
+        "id": null,
+        "self.type": "",
+        "time_crawl": "",
+        "self.created_time": [
+            "09/01/2023 22:44:01",
+            2.2311888767939814
+        ],
+        "author": {
+            "author_link": "https://mbasic.facebook.com/tungnemoinguoi243?eav=AfaG66sRjbRB_ZTb0yXkKO7rsiRollWVFmNZR5q-J03zX4UC9BhL1s8za1c5deLAqdc&refid=18&__tn__=C-R&paipv=0",
+            "auth_name": "Lưu Thanh Tùng"
+        },
+        "number_comment": "189",
+        "time": [
+            "09/01/2023 22:44:01",
+            2.2311888767939814
+        ],
+        "content": "Một sự cute",
+        "video_only": "https://mbasic.facebook.com/video_redirect/?src=https%3A%2F%2Fscontent.fhan18-1.fna.fbcdn.net%2Fv%2Ft42.1790-2%2F371802241_1760787241024395_3947230205699628534_n.mp4%3F_nc_cat%3D101%26ccb%3D1-7%26_nc_sid%3D985c63%26efg%3DeyJ2ZW5jb2RlX3RhZyI6InN2ZV9zZCJ9%26_nc_ohc%3DZNFfYWaTedwAX9zhMNk%26_nc_oc%3DAQnT8rgFyzeA9c13f2WA-nH13NjKtshpoLjFrkE2vWZkTjpUC_FEwwPmGCSVUJlAkGc%26_nc_rml%3D0%26_nc_ht%3Dscontent.fhan18-1.fna%26oh%3D00_AfAd_PTEC8ekXwf0ouUiUdZ0MON8LuTwtrRe5x-Ep2HVSg%26oe%3D64F95F32&source=misc&id=1040102013814492&noredirect=0&watermark=0&refid=18&__tn__=FH-R&paipv=0&eav=AfbzI8VgsCsOzgHRy1uqa9pF4Z6T3772WtkVGVuDOV35juACWf9ZH9igACJJ9e6_TjI",
+        "image_post_list": [],
+        "number_reaction": {
+            "Like": 6900,
+            "Love": 1100,
+            "Wow": 14,
+            "Haha": 5000,
+            "Angry": 0,
+            "Huhu": 24
+        }
+    },
+    "null": {
+        "id": null,
+        "self.type": "",
+        "time_crawl": "",
+        "self.created_time": [
+            "08/29/2023 12:14:01",
+            5.668916898900463
+        ],
+        "author": {
+            "author_link": "https://mbasic.facebook.com/nam.tranlenh.581?eav=AfbvxY9yt3bRz1pNaCqRTTZdVHe6VVU-SsuLB5rYeFRTuhYZRMDEIyq53lf_Rhljbu4&refid=18&__tn__=C-R&paipv=0",
+            "auth_name": "Nam"
+        },
+        "number_comment": "123",
+        "time": [
+            "08/29/2023 12:14:01",
+            5.668916898900463
+        ],
+        "content": "Refund không bao giờ sayyy",
+        "video_only": "https://mbasic.facebook.com/video_redirect/?src=https%3A%2F%2Fscontent.fhan18-1.fna.fbcdn.net%2Fv%2Ft42.1790-2%2F370851433_247563464920718_356298372675610823_n.mp4%3F_nc_cat%3D105%26ccb%3D1-7%26_nc_sid%3D985c63%26efg%3DeyJ2ZW5jb2RlX3RhZyI6InN2ZV9zZCJ9%26_nc_ohc%3DMPzsmiqn1YUAX9WGicY%26_nc_rml%3D0%26_nc_ht%3Dscontent.fhan18-1.fna%26oh%3D00_AfBWzpoUuEa1rP5lsvRvPMKTnYkHKLTiyh4fB-JU2P__3w%26oe%3D64FA5151&source=misc&id=2148954022162699&noredirect=0&watermark=0&refid=18&__tn__=FH-R&paipv=0&eav=AfbZiZ2EiczlOSAHnq_KodtwxrA2O4T6v9sE2O7pX8olh3OjVT4ogy1ZfJG8kvTKujk",
+        "image_post_list": [],
+        "number_reaction": {
+            "Like": 13000,
+            "Love": 98,
+            "Wow": 8,
+            "Haha": 15000,
+            "Angry": 0,
+            "Huhu": 104
+        }
+    }
+}
