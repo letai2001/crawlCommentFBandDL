@@ -110,12 +110,12 @@ class Detail_Comment_Crawler :
             
             sleep(random.uniform(2.25, 5.5) )
             
-            reaction_Like = self.count_react(self.driver , "Like")
-            reaction_Love = self.count_react(self.driver , "Love")
-            reaction_Wow = self.count_react(self.driver , "Wow")
-            reaction_Haha = self.count_react(self.driver , "Haha")
-            reaction_Angry = self.count_react(self.driver , "Angry")
-            reaction_Huhu = self.count_react(self.driver , "Sad")
+            reaction_Like = self.count_react("Like")
+            reaction_Love = self.count_react("Love")
+            reaction_Wow = self.count_react("Wow")
+            reaction_Haha = self.count_react("Haha")
+            reaction_Angry = self.count_react("Angry")
+            reaction_Huhu = self.count_react("Sad")
             
             self.driver.back()
         except Exception as e:
